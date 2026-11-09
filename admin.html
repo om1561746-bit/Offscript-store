@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OFFSPCRIPT | Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 30px;
+      background: #111;
+      color: #f4efdf;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #444;
+      padding-bottom: 20px;
+    }
+    header img { width: 65px; }
+    h1 { font-size: 25px; }
+    .accent { color: #caff45; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 30px 0;
+    }
+    .card {
+      background: #201f1b;
+      padding: 22px;
+      border-radius: 10px;
+    }
+    .card p { color: #aaa; }
+    .card h2 { font-size: 28px; }
+    .orders {
+      background: #201f1b;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .empty { color: #aaa; padding: 20px 0; }
+    @media(max-width: 500px) {
+      body { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="OFFSPCRIPT">
+    <span class="accent">ADMIN</span>
+  </header>
+
+  <h1>Dashboard<span class="accent">.</span></h1>
+
+  <section class="stats">
+    <div class="card">
+      <p>ORDERS</p>
+      <h2>—</h2>
+    </div>
+    <div class="card">
+      <p>TOTAL SALES</p>
+      <h2>EGP —</h2>
+    </div>
+  </section>
+
+  <section class="orders">
+    <h3>Recent Orders</h3>
+    <p class="empty">Orders will appear here.</p>
+  </section>
+</body>
+</html>
