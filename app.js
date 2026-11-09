@@ -1,4 +1,6 @@
 const products = window.OFFSPCRIPT_PRODUCTS || [];
+const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_HQULCRRENKLYll-lslrR-Q_I3qa_NMg";
 let cart = JSON.parse(localStorage.getItem("offspcript-cart") || "[]");
 let activeFilter = "all";
 
@@ -153,12 +155,13 @@ document.querySelectorAll(".filter").forEach(button => {
   };
 });
 
-$("checkoutForm").onsubmit = event => {
+$("checkoutForm").onsubmit = async event => {
   event.preventDefault();
   if (!cart.length) return;
 
+  const form = event.target;
   const data = Object.fromEntries(
-    new FormData(event.target).entries()
+    new FormData(form).entries()
   );
 
   const total = cart.reduce(
@@ -166,17 +169,46 @@ $("checkoutForm").onsubmit = event => {
     0
   );
 
-  const order = {
-    reference: "OFF-" + Date.now().toString().slice(-7),
-    created: new Date().toISOString(),
-    customer: data,
+  const reference = "OFF-" + Date.now().toString().slice(-7);
+
+  const orderData = {
+    order_reference: reference,
+    customer_name: data.name,
+    phone: data.phone,
+    email: data.email || null,
+    address: data.address,
     items: cart,
-    total,
-    currency: "EGP",
-    payment: "Cash on Delivery"
+    total: total,
+    payment_method: "Cash on Delivery",
+    status: "Pending",
+    notes: data.notes || null
   };
 
-  const message = `OFFSPCRIPT ORDER ${order.reference}
+  const msg = $("formMessage");
+  msg.className = "form-message";
+  msg.textContent = "Saving your order...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(orderData)
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    const message = `OFFSPCRIPT ORDER ${reference}
 Name: ${data.name}
 Phone: ${data.phone}
 Address: ${data.address}
@@ -188,29 +220,27 @@ ${cart.map(x =>
 Total: ${money(total)}
 Notes: ${data.notes || "-"}`;
 
-  const msg = $("formMessage");
-  const whatsapp = window.OFFSPCRIPT_WHATSAPP || "";
+    const whatsapp = window.OFFSPCRIPT_WHATSAPP || "";
 
-  if (!whatsapp) {
+    if (whatsapp) {
+      window.open(
+        `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
+        "_blank"
+      );
+    }
+
+    msg.className = "form-message success";
+    msg.textContent =
+      "Order saved successfully! Your order reference is " + reference;
+
+    cart = [];
+    save();
+    form.reset();
+
+  } catch (error) {
+    console.error(error);
     msg.className = "form-message error";
     msg.textContent =
-      "The store WhatsApp number is not configured yet. The order has not been submitted.";
-    return;
+      "Could not save your order. Please try again.";
   }
-
-  window.open(
-    `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
-    "_blank"
-  );
-
-  msg.className = "form-message success";
-  msg.textContent =
-    "Your Cash on Delivery order summary opened in WhatsApp. Send the message there to submit your order.";
-
-  cart = [];
-  save();
-  event.target.reset();
 };
-
-renderProducts();
-renderCart();
