@@ -1,11 +1,216 @@
-const products=window.OFFSPCRIPT_PRODUCTS||[];let cart=JSON.parse(localStorage.getItem("offspcript-cart")||"[]");let activeFilter="all";
-const $=id=>document.getElementById(id);const money=n=>"EGP "+Number(n).toLocaleString("en-EG");
-function save(){localStorage.setItem("offspcript-cart",JSON.stringify(cart));renderCart()}
-function renderProducts(){const list=$("products");list.innerHTML="";products.filter(p=>activeFilter==="all"||p.category===activeFilter).forEach(p=>{const card=document.createElement("article");card.className="product-card";const image=p.image?`<img src="${p.image}" alt="${p.name}">`:`<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>`;card.innerHTML=`<div class="product-image">${image}<span class="product-tag">${p.tag||"OFFSPCRIPT"}</span></div><div class="product-info"><div><div class="product-name">${p.name}</div><div class="product-meta">${p.description||""}</div><div class="product-price">${money(p.price)}</div></div><button class="add-button">ADD +</button></div>`;card.querySelector("button").onclick=()=>add(p.id);list.appendChild(card)})}
-function add(id){const p=products.find(x=>x.id===id);if(!p)return;const existing=cart.find(x=>x.id===id&&x.size===p.sizes[0]);if(existing)existing.qty++;else cart.push({id:p.id,name:p.name,price:p.price,size:p.sizes[0],qty:1});save();openCart()}
-function renderCart(){const count=cart.reduce((s,x)=>s+x.qty,0),total=cart.reduce((s,x)=>s+x.price*x.qty,0);$("cartCount").textContent=count;$("drawerCount").textContent=`(${count})`;$("subtotal").textContent=money(total);$("checkoutTotal").textContent=money(total);const wrap=$("cartItems");if(!cart.length){wrap.innerHTML='<p class="muted">Your bag is empty.</p>';return}wrap.innerHTML="";cart.forEach((x,i)=>{const row=document.createElement("div");row.className="cart-row";row.innerHTML=`<div><strong>${x.name}</strong><small>Size: ${x.size} · ${money(x.price)}</small><small>${money(x.price*x.qty)}</small></div><div class="qty"><button aria-label="Decrease">−</button><span>${x.qty}</span><button aria-label="Increase">+</button></div>`;const buttons=row.querySelectorAll("button");buttons[0].onclick=()=>{x.qty--;if(x.qty<=0)cart.splice(i,1);save()};buttons[1].onclick=()=>{x.qty++;save()};wrap.appendChild(row)})}
-function openCart(){$("overlay").classList.add("show");$("cartDrawer").classList.add("show")}function closeAll(){$("overlay").classList.remove("show");$("cartDrawer").classList.remove("show");$("checkoutModal").classList.remove("show")}
-$("openCart").onclick=openCart;$("closeCart").onclick=closeAll;$("overlay").onclick=closeAll;$("checkoutButton").onclick=()=>{if(!cart.length)return;closeAll();$("checkoutModal").classList.add("show")};$("closeCheckout").onclick=()=>$("checkoutModal").classList.remove("show");
-document.querySelectorAll(".filter").forEach(b=>b.onclick=()=>{document.querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");activeFilter=b.dataset.filter;renderProducts()});
-$("checkoutForm").onsubmit=e=>{e.preventDefault();if(!cart.length)return;const data=Object.fromEntries(new FormData(e.target).entries());const total=cart.reduce((s,x)=>s+x.price*x.qty,0);const order={reference:"OFF-"+Date.now().toString().slice(-7),created:new Date().toISOString(),customer:data,items:cart,total,currency:"EGP"};const message=`OFFSPCRIPT ORDER ${order.reference}\nName: ${data.name}\nPhone: ${data.phone}\nAddress: ${data.address}\nPayment: ${data.payment}\nItems:\n${cart.map(x=>`${x.name} / ${x.size} x${x.qty} — ${money(x.price*x.qty)}`).join("\n")}\nTotal: ${money(total)}\nNotes: ${data.notes||"-"}`;const msg=$("formMessage");if(data.payment.startsWith("Online")){msg.className="form-message";msg.textContent="Online card payments are not connected yet. Your order details are ready, but no payment has been taken. Contact the store to receive its official payment link.";return}const wa=window.OFFSPCRIPT_WHATSAPP||"";if(!wa){msg.className="form-message error";msg.textContent="Store WhatsApp number is not configured yet. Add it in app.js before accepting orders.";return}window.open(`https://wa.me/${wa}?text=${encodeURIComponent(message)}`,"_blank");msg.className="form-message success";msg.textContent="Your order summary opened in WhatsApp. Send the message there to submit your order.";cart=[];save();e.target.reset()};
-renderProducts();renderCart();
+const products = window.OFFSPCRIPT_PRODUCTS || [];
+let cart = JSON.parse(localStorage.getItem("offspcript-cart") || "[]");
+let activeFilter = "all";
+
+const $ = id => document.getElementById(id);
+const money = n => "EGP " + Number(n).toLocaleString("en-EG");
+
+function save() {
+  localStorage.setItem("offspcript-cart", JSON.stringify(cart));
+  renderCart();
+}
+
+function renderProducts() {
+  const list = $("products");
+  list.innerHTML = "";
+
+  products
+    .filter(p => activeFilter === "all" || p.category === activeFilter)
+    .forEach(p => {
+      const card = document.createElement("article");
+      card.className = "product-card";
+
+      const image = p.image
+        ? `<img src="${p.image}" alt="${p.name}">`
+        : `<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>`;
+
+      card.innerHTML = `
+        <div class="product-image">
+          ${image}
+          <span class="product-tag">${p.tag || "OFFSPCRIPT"}</span>
+        </div>
+        <div class="product-info">
+          <div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-meta">${p.description || ""}</div>
+            <div class="product-price">${money(p.price)}</div>
+          </div>
+          <button class="add-button">ADD +</button>
+        </div>`;
+
+      card.querySelector("button").onclick = () => add(p.id);
+      list.appendChild(card);
+    });
+}
+
+function add(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+
+  const firstSize = p.sizes?.[0] || "One Size";
+  const existing = cart.find(x => x.id === id && x.size === firstSize);
+
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      size: firstSize,
+      qty: 1
+    });
+  }
+
+  save();
+  openCart();
+}
+
+function renderCart() {
+  const count = cart.reduce((s, x) => s + x.qty, 0);
+  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+
+  $("cartCount").textContent = count;
+  $("drawerCount").textContent = `(${count})`;
+  $("subtotal").textContent = money(total);
+  $("checkoutTotal").textContent = money(total);
+
+  const wrap = $("cartItems");
+
+  if (!cart.length) {
+    wrap.innerHTML = '<p class="muted">Your bag is empty.</p>';
+    return;
+  }
+
+  wrap.innerHTML = "";
+
+  cart.forEach((x, i) => {
+    const row = document.createElement("div");
+    row.className = "cart-row";
+
+    row.innerHTML = `
+      <div>
+        <strong>${x.name}</strong>
+        <small>Size: ${x.size} · ${money(x.price)}</small>
+        <small>${money(x.price * x.qty)}</small>
+      </div>
+      <div class="qty">
+        <button aria-label="Decrease">−</button>
+        <span>${x.qty}</span>
+        <button aria-label="Increase">+</button>
+      </div>`;
+
+    const buttons = row.querySelectorAll("button");
+
+    buttons[0].onclick = () => {
+      x.qty--;
+      if (x.qty <= 0) cart.splice(i, 1);
+      save();
+    };
+
+    buttons[1].onclick = () => {
+      x.qty++;
+      save();
+    };
+
+    wrap.appendChild(row);
+  });
+}
+
+function openCart() {
+  $("overlay").classList.add("show");
+  $("cartDrawer").classList.add("show");
+}
+
+function closeAll() {
+  $("overlay").classList.remove("show");
+  $("cartDrawer").classList.remove("show");
+  $("checkoutModal").classList.remove("show");
+}
+
+$("openCart").onclick = openCart;
+$("closeCart").onclick = closeAll;
+$("overlay").onclick = closeAll;
+
+$("checkoutButton").onclick = () => {
+  if (!cart.length) return;
+  closeAll();
+  $("checkoutModal").classList.add("show");
+};
+
+$("closeCheckout").onclick = () =>
+  $("checkoutModal").classList.remove("show");
+
+document.querySelectorAll(".filter").forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll(".filter").forEach(x =>
+      x.classList.remove("active")
+    );
+
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+    renderProducts();
+  };
+});
+
+$("checkoutForm").onsubmit = event => {
+  event.preventDefault();
+  if (!cart.length) return;
+
+  const data = Object.fromEntries(
+    new FormData(event.target).entries()
+  );
+
+  const total = cart.reduce(
+    (s, x) => s + x.price * x.qty,
+    0
+  );
+
+  const order = {
+    reference: "OFF-" + Date.now().toString().slice(-7),
+    created: new Date().toISOString(),
+    customer: data,
+    items: cart,
+    total,
+    currency: "EGP",
+    payment: "Cash on Delivery"
+  };
+
+  const message = `OFFSPCRIPT ORDER ${order.reference}
+Name: ${data.name}
+Phone: ${data.phone}
+Address: ${data.address}
+Payment: Cash on Delivery
+Items:
+${cart.map(x =>
+  `${x.name} / ${x.size} x${x.qty} — ${money(x.price * x.qty)}`
+).join("\n")}
+Total: ${money(total)}
+Notes: ${data.notes || "-"}`;
+
+  const msg = $("formMessage");
+  const whatsapp = window.OFFSPCRIPT_WHATSAPP || "";
+
+  if (!whatsapp) {
+    msg.className = "form-message error";
+    msg.textContent =
+      "The store WhatsApp number is not configured yet. The order has not been submitted.";
+    return;
+  }
+
+  window.open(
+    `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+
+  msg.className = "form-message success";
+  msg.textContent =
+    "Your Cash on Delivery order summary opened in WhatsApp. Send the message there to submit your order.";
+
+  cart = [];
+  save();
+  event.target.reset();
+};
+
+renderProducts();
+renderCart();
