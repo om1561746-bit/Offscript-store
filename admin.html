@@ -4,15 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OFFSPCRIPT | Admin</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 30px;
+      padding: 25px;
       background: #111;
       color: #f4efdf;
       font-family: Arial, sans-serif;
     }
+
+    .accent { color: #caff45; }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -20,55 +27,300 @@
       border-bottom: 1px solid #444;
       padding-bottom: 20px;
     }
+
     header img { width: 65px; }
+
     h1 { font-size: 25px; }
-    .accent { color: #caff45; }
+
+    button, input, select {
+      font: inherit;
+      border-radius: 6px;
+      padding: 11px;
+    }
+
+    button {
+      background: #caff45;
+      color: #111;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    input {
+      width: 100%;
+      background: #201f1b;
+      color: white;
+      border: 1px solid #555;
+      margin: 8px 0 15px;
+    }
+
+    .panel {
+      max-width: 420px;
+      margin: 70px auto;
+      background: #201f1b;
+      padding: 25px;
+      border-radius: 10px;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 15px;
-      margin: 30px 0;
+      margin: 25px 0;
     }
-    .card {
-      background: #201f1b;
-      padding: 22px;
-      border-radius: 10px;
-    }
-    .card p { color: #aaa; }
-    .card h2 { font-size: 28px; }
-    .orders {
+
+    .card, .orders {
       background: #201f1b;
       padding: 20px;
       border-radius: 10px;
     }
-    .empty { color: #aaa; padding: 20px 0; }
+
+    .card p { color: #aaa; }
+    .card h2 { font-size: 27px; }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 13px 10px;
+      border-bottom: 1px solid #444;
+    }
+
+    th { color: #caff45; }
+
+    select {
+      background: #111;
+      color: white;
+      border: 1px solid #555;
+    }
+
+    .message { color: #caff45; }
+    .hidden { display: none; }
+
     @media(max-width: 500px) {
-      body { padding: 18px; }
+      body { padding: 15px; }
+      .stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <img src="logo.png" alt="OFFSPCRIPT">
-    <span class="accent">ADMIN</span>
-  </header>
 
-  <h1>Dashboard<span class="accent">.</span></h1>
+<body>
+
+<header>
+  <img src="logo.png" alt="OFFSPCRIPT">
+  <span class="accent">ADMIN</span>
+</header>
+
+<section id="login" class="panel">
+  <h1>Admin Login<span class="accent">.</span></h1>
+
+  <label>Email</label>
+  <input id="email" type="email" placeholder="Admin email">
+
+  <label>Password</label>
+  <input id="password" type="password" placeholder="Password">
+
+  <button id="loginBtn">LOGIN</button>
+  <p id="loginMessage" class="message"></p>
+</section>
+
+<main id="dashboard" class="hidden">
+
+  <div class="top">
+    <h1>Dashboard<span class="accent">.</span></h1>
+    <button id="logoutBtn">LOG OUT</button>
+  </div>
 
   <section class="stats">
     <div class="card">
       <p>ORDERS</p>
-      <h2>—</h2>
+      <h2 id="orderCount">0</h2>
     </div>
+
     <div class="card">
       <p>TOTAL SALES</p>
-      <h2>EGP —</h2>
+      <h2 id="totalSales">EGP 0</h2>
     </div>
   </section>
 
   <section class="orders">
     <h3>Recent Orders</h3>
-    <p class="empty">Orders will appear here.</p>
+    <p id="statusMessage" class="message"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="ordersList"></tbody>
+      </table>
+    </div>
   </section>
+
+</main>
+
+<script>
+  const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
+
+  // Paste your existing publishable key from app.js here.
+  const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const loginSection = document.getElementById("login");
+  const dashboard = document.getElementById("dashboard");
+
+  document.getElementById("loginBtn").addEventListener("click", login);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+
+  async function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("loginMessage");
+
+    message.textContent = "Logging in...";
+
+    const { error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      message.textContent = error.message;
+      return;
+    }
+
+    await showDashboard();
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    dashboard.classList.add("hidden");
+    loginSection.classList.remove("hidden");
+  }
+
+  async function showDashboard() {
+    loginSection.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+    await loadOrders();
+  }
+
+  async function loadOrders() {
+    const message = document.getElementById("statusMessage");
+    const list = document.getElementById("ordersList");
+
+    message.textContent = "Loading orders...";
+    list.replaceChildren();
+
+    const { data, error } = await db
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      message.textContent = "Could not load orders: " + error.message;
+      return;
+    }
+
+    document.getElementById("orderCount").textContent = data.length;
+
+    const sales = data
+      .filter(order => order.status !== "Cancelled")
+      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+    document.getElementById("totalSales").textContent =
+      "EGP " + sales.toFixed(2);
+
+    if (data.length === 0) {
+      message.textContent = "No orders yet.";
+      return;
+    }
+
+    message.textContent = "";
+
+    data.forEach(order => {
+      const tr = document.createElement("tr");
+
+      const values = [
+        order.order_reference || order.id,
+        order.customer_name || "",
+        order.phone || "",
+        "EGP " + Number(order.total || 0).toFixed(2)
+      ];
+
+      values.forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+
+      const statusCell = document.createElement("td");
+      const select = document.createElement("select");
+
+      ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
+        .forEach(status => {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = status;
+          select.appendChild(option);
+        });
+
+      select.value = order.status || "Pending";
+
+      select.addEventListener("change", async () => {
+        select.disabled = true;
+
+        const { error } = await db
+          .from("orders")
+          .update({ status: select.value })
+          .eq("id", order.id);
+
+        if (error) {
+          message.textContent = "Update failed: " + error.message;
+          select.value = order.status || "Pending";
+        } else {
+          order.status = select.value;
+          message.textContent = "Order status updated.";
+        }
+
+        select.disabled = false;
+      });
+
+      statusCell.appendChild(select);
+      tr.appendChild(statusCell);
+      list.appendChild(tr);
+    });
+  }
+
+  async function checkLogin() {
+    const { data } = await db.auth.getSession();
+
+    if (data.session) {
+      await showDashboard();
+    }
+  }
+
+  checkLogin();
+</script>
+
 </body>
 </html>
