@@ -12,9 +12,16 @@
 </head>
 <body>
   <div class="announcement">OFFSPCRIPT — EVERYDAY UNIFORM, DIFFERENT FREQUENCY.</div>
+
   <header class="header">
-    <a class="wordmark logo-link" href="#" aria-label="OFFSPCRIPT home"><img src="logo.png" alt="OFFSPCRIPT — Wear the Unwritten"></a>
-    <nav><a href="#shop">SHOP</a><a href="#about">ABOUT</a><a href="#contact">CONTACT</a></nav>
+    <a class="wordmark logo-link" href="#" aria-label="OFFSPCRIPT home">
+      <img src="logo.png" alt="OFFSPCRIPT — Wear the Unwritten">
+    </a>
+    <nav>
+      <a href="#shop">SHOP</a>
+      <a href="#about">ABOUT</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
     <button class="cart-trigger" id="openCart">BAG <span id="cartCount">0</span></button>
   </header>
 
@@ -26,17 +33,33 @@
         <p class="hero-desc">Everyday pieces. Unusual point of view.<br>Welcome to OFFSPCRIPT.</p>
         <a class="button button-light" href="#shop">EXPLORE THE DROP <span>↗</span></a>
       </div>
+
       <div class="hero-art" aria-label="OFFSPCRIPT brand logo">
         <img class="hero-logo" src="logo.png" alt="OFFSPCRIPT — Wear the Unwritten">
       </div>
+
       <div class="hero-index">01 / THE FIRST DROP</div>
     </section>
 
-    <section class="ticker"><div>OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;</div></section>
+    <section class="ticker">
+      <div>OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;OFFSPCRIPT&nbsp; ✳ &nbsp;</div>
+    </section>
 
     <section class="shop section" id="shop">
-      <div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2>FIRST DROP<span> / 001</span></h2></div><p class="muted">A starting point.<br>More coming soon.</p></div>
-      <div class="filters"><button class="filter active" data-filter="all">ALL PIECES</button><button class="filter" data-filter="tshirt">T-SHIRTS</button><button class="filter" data-filter="shorts">SHORTS</button></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">THE COLLECTION</p>
+          <h2>FIRST DROP<span> / 001</span></h2>
+        </div>
+        <p class="muted">A starting point.<br>More coming soon.</p>
+      </div>
+
+      <div class="filters">
+        <button class="filter active" data-filter="all">ALL PIECES</button>
+        <button class="filter" data-filter="tshirt">T-SHIRTS</button>
+        <button class="filter" data-filter="shorts">SHORTS</button>
+      </div>
+
       <div class="products" id="products"></div>
     </section>
 
@@ -45,45 +68,99 @@
       <h2>OWN YOUR<br><span>FREQUENCY.</span></h2>
       <p>Offspcript is a streetwear project built around considered essentials, expressive details, and the freedom to wear things your own way.</p>
     </section>
+
     <section class="contact section" id="contact">
-      <div><p class="eyebrow">STAY IN THE LOOP</p><h2>THE NEXT DROP<br>ISN'T FAR.</h2></div>
+      <div>
+        <p class="eyebrow">STAY IN THE LOOP</p>
+        <h2>THE NEXT DROP<br>ISN'T FAR.</h2>
+      </div>
       <a class="button button-dark" href="mailto:hello@offspcript.com">GET IN TOUCH ↗</a>
     </section>
   </main>
 
-  <footer><a class="wordmark logo-link" href="#" aria-label="OFFSPCRIPT home"><img src="logo.png" alt="OFFSPCRIPT — Wear the Unwritten"></a><span>© 2026 OFFSPCRIPT. ALL RIGHTS RESERVED.</span><a href="#shop">BACK TO TOP ↑</a></footer>
+  <footer>
+    <a class="wordmark logo-link" href="#" aria-label="OFFSPCRIPT home">
+      <img src="logo.png" alt="OFFSPCRIPT — Wear the Unwritten">
+    </a>
+    <span>© 2026 OFFSPCRIPT. ALL RIGHTS RESERVED.</span>
+    <a href="#shop">BACK TO TOP ↑</a>
+  </footer>
 
   <div class="overlay" id="overlay"></div>
+
   <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping bag">
-    <div class="drawer-head"><h2>YOUR BAG <span id="drawerCount">(0)</span></h2><button id="closeCart" class="close">✕</button></div>
-    <div id="cartItems" class="cart-items"><p class="muted">Your bag is empty.</p></div>
+    <div class="drawer-head">
+      <h2>YOUR BAG <span id="drawerCount">(0)</span></h2>
+      <button id="closeCart" class="close">✕</button>
+    </div>
+
+    <div id="cartItems" class="cart-items">
+      <p class="muted">Your bag is empty.</p>
+    </div>
+
     <div class="cart-bottom">
-      <div class="subtotal"><span>SUBTOTAL</span><strong id="subtotal">EGP 0</strong></div>
+      <div class="subtotal">
+        <span>SUBTOTAL</span>
+        <strong id="subtotal">EGP 0</strong>
+      </div>
       <p class="tiny">Shipping is calculated when we confirm your order.</p>
       <button class="button button-dark full" id="checkoutButton">CONTINUE TO CHECKOUT</button>
     </div>
   </aside>
 
   <section class="checkout-modal" id="checkoutModal" aria-label="Checkout">
-    <div class="modal-head"><div><p class="eyebrow">OFFSPCRIPT / CHECKOUT</p><h2>YOUR DETAILS</h2></div><button class="close" id="closeCheckout">✕</button></div>
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow">OFFSPCRIPT / CHECKOUT</p>
+        <h2>YOUR DETAILS</h2>
+      </div>
+      <button class="close" id="closeCheckout">✕</button>
+    </div>
+
     <form id="checkoutForm">
       <div class="form-grid">
-        <label>FULL NAME<input name="name" required autocomplete="name" placeholder="Your name"></label>
-        <label>PHONE NUMBER<input name="phone" required autocomplete="tel" placeholder="01xxxxxxxxx"></label>
-        <label class="wide">EMAIL (OPTIONAL)<input name="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
-        <label class="wide">DELIVERY ADDRESS<textarea name="address" required rows="3" placeholder="Area, street, building, apartment"></textarea></label>
-        <label class="wide">ORDER NOTES (OPTIONAL)<textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea></label>
+        <label>FULL NAME
+          <input name="name" required autocomplete="name" placeholder="Your name">
+        </label>
+
+        <label>PHONE NUMBER
+          <input name="phone" required autocomplete="tel" placeholder="01xxxxxxxxx">
+        </label>
+
+        <label class="wide">EMAIL (OPTIONAL)
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com">
+        </label>
+
+        <label class="wide">DELIVERY ADDRESS
+          <textarea name="address" required rows="3" placeholder="Area, street, building, apartment"></textarea>
+        </label>
+
+        <label class="wide">ORDER NOTES (OPTIONAL)
+          <textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea>
+        </label>
       </div>
-      <fieldset><legend>PAYMENT METHOD</legend>
-        <label class="payment-choice"><input type="radio" name="payment" value="Cash on Delivery" checked> Cash on Delivery</label>
-        <label class="payment-choice"><input type="radio" name="payment" value="Online payment (payment link to be sent)"> Online payment</label>
+
+      <fieldset>
+        <legend>PAYMENT METHOD</legend>
+        <label class="payment-choice">
+          <input type="radio" name="payment" value="Cash on Delivery" checked>
+          Cash on Delivery
+        </label>
       </fieldset>
-      <div class="checkout-total"><span>ORDER TOTAL</span><strong id="checkoutTotal">EGP 0</strong></div>
+
+      <div class="checkout-total">
+        <span>ORDER TOTAL</span>
+        <strong id="checkoutTotal">EGP 0</strong>
+      </div>
+
       <button class="button button-dark full" type="submit">PLACE ORDER</button>
-      <p class="tiny">Online payment is not activated yet. For now, selecting it requests a secure payment link from the store. Card details are never collected on this website.</p>
+
+      <p class="tiny">Payment will be collected in cash when your order is delivered.</p>
       <p class="form-message" id="formMessage" role="status"></p>
     </form>
   </section>
-  <script src="products.js"></script><script src="app.js"></script>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
