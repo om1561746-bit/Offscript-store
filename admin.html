@@ -2,301 +2,251 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OFFSPCRIPT | Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFFSPCRIPT | Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 25px;
-      background: #111;
-      color: #f4efdf;
-      font-family: Arial, sans-serif;
-    }
-    .accent { color: #caff45; }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #444;
-      padding-bottom: 20px;
-    }
-    header img { width: 65px; }
-    h1 { font-size: 25px; }
-    button, input, select {
-      font: inherit;
-      border-radius: 6px;
-      padding: 11px;
-    }
-    button {
-      background: #caff45;
-      color: #111;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    input {
-      width: 100%;
-      background: #201f1b;
-      color: white;
-      border: 1px solid #555;
-      margin: 8px 0 15px;
-    }
-    .panel {
-      max-width: 420px;
-      margin: 70px auto;
-      background: #201f1b;
-      padding: 25px;
-      border-radius: 10px;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin: 25px 0;
-    }
-    .card, .orders {
-      background: #201f1b;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    .card p { color: #aaa; }
-    .card h2 { font-size: 27px; }
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-    }
-    .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 650px;
-    }
-    th, td {
-      text-align: left;
-      padding: 13px 10px;
-      border-bottom: 1px solid #444;
-    }
-    th { color: #caff45; }
-    select {
-      background: #111;
-      color: white;
-      border: 1px solid #555;
-    }
-    .message { color: #caff45; }
-    .hidden { display: none; }
-    @media(max-width: 500px) {
-      body { padding: 15px; }
-      .stats { grid-template-columns: 1fr; }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:25px;background:#111;color:#f4efdf;font-family:Arial,sans-serif}
+.accent{color:#caff45}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #444;padding-bottom:20px}
+header img{width:65px}
+button,input,select{font:inherit;padding:11px;border-radius:6px}
+button{background:#caff45;color:#111;border:0;font-weight:bold;cursor:pointer}
+input{width:100%;background:#201f1b;color:white;border:1px solid #555;margin:8px 0 15px}
+.panel{max-width:420px;margin:70px auto;background:#201f1b;padding:25px;border-radius:10px}
+.hidden{display:none!important}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin:25px 0}
+.card,.orders,.details{background:#201f1b;padding:20px;border-radius:10px}
+.card p{color:#aaa}
+.card h2{font-size:27px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}
+th,td{text-align:left;padding:13px 10px;border-bottom:1px solid #444}
+th{color:#caff45}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#302f28}
+select{background:#111;color:white;border:1px solid #555}
+.message{color:#caff45}
+.modal{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;padding:15px;z-index:10}
+.details{width:100%;max-width:550px;max-height:85vh;overflow:auto;border:1px solid #555}
+.detail-line{padding:10px 0;border-bottom:1px solid #444;overflow-wrap:anywhere}
+.detail-line strong{color:#caff45;display:block;margin-bottom:5px}
+#items{white-space:pre-wrap;line-height:1.6}
+@media(max-width:500px){body{padding:15px}.stats{grid-template-columns:1fr}}
+</style>
 </head>
 
 <body>
-
 <header>
-  <img src="logo.png" alt="OFFSPCRIPT">
-  <span class="accent">ADMIN</span>
+<img src="logo.png" alt="OFFSPCRIPT">
+<span class="accent">ADMIN</span>
 </header>
 
 <section id="login" class="panel">
-  <h1>Admin Login<span class="accent">.</span></h1>
-
-  <label>Email</label>
-  <input id="email" type="email" placeholder="Admin email">
-
-  <label>Password</label>
-  <input id="password" type="password" placeholder="Password">
-
-  <button id="loginBtn">LOGIN</button>
-  <p id="loginMessage" class="message"></p>
+<h1>Admin Login<span class="accent">.</span></h1>
+<label>Email</label>
+<input id="email" type="email" placeholder="Admin email">
+<label>Password</label>
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn">LOGIN</button>
+<p id="loginMessage" class="message"></p>
 </section>
 
 <main id="dashboard" class="hidden">
+<div class="top">
+<h1>Dashboard<span class="accent">.</span></h1>
+<button id="logoutBtn">LOG OUT</button>
+</div>
 
-  <div class="top">
-    <h1>Dashboard<span class="accent">.</span></h1>
-    <button id="logoutBtn">LOG OUT</button>
-  </div>
+<section class="stats">
+<div class="card"><p>ORDERS</p><h2 id="orderCount">0</h2></div>
+<div class="card"><p>TOTAL SALES</p><h2 id="totalSales">EGP 0</h2></div>
+</section>
 
-  <section class="stats">
-    <div class="card">
-      <p>ORDERS</p>
-      <h2 id="orderCount">0</h2>
-    </div>
-    <div class="card">
-      <p>TOTAL SALES</p>
-      <h2 id="totalSales">EGP 0</h2>
-    </div>
-  </section>
-
-  <section class="orders">
-    <h3>Recent Orders</h3>
-    <p id="statusMessage" class="message"></p>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Customer</th>
-            <th>Phone</th>
-            <th>Total</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="ordersList"></tbody>
-      </table>
-    </div>
-  </section>
-
+<section class="orders">
+<h3>Recent Orders</h3>
+<p id="statusMessage" class="message"></p>
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Order</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th></tr>
+</thead>
+<tbody id="ordersList"></tbody>
+</table>
+</div>
+<p style="color:#aaa">Click any order to see its details.</p>
+</section>
 </main>
 
+<div id="orderModal" class="modal hidden">
+<div class="details">
+<div class="top">
+<h2>Order Details<span class="accent">.</span></h2>
+<button id="closeModal">CLOSE</button>
+</div>
+<div class="detail-line"><strong>Order Reference</strong><span id="dReference"></span></div>
+<div class="detail-line"><strong>Customer Name</strong><span id="dName"></span></div>
+<div class="detail-line"><strong>Phone</strong><span id="dPhone"></span></div>
+<div class="detail-line"><strong>Email</strong><span id="dEmail"></span></div>
+<div class="detail-line"><strong>Address</strong><span id="dAddress"></span></div>
+<div class="detail-line"><strong>Products and Quantities</strong><div id="items"></div></div>
+<div class="detail-line"><strong>Total</strong><span id="dTotal"></span></div>
+<div class="detail-line"><strong>Payment Method</strong><span id="dPayment"></span></div>
+<div class="detail-line"><strong>Status</strong><span id="dStatus"></span></div>
+<div class="detail-line"><strong>Customer Notes</strong><span id="dNotes"></span></div>
+</div>
+</div>
+
 <script>
-  const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
+const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
+const SUPABASE_KEY = "sb_publishable_HQULCRRENKLYll-lslrR-Q_I3qa_NMg";
 
-  const SUPABASE_KEY = "sb_publishable_HQULCRRENKLYll-lslrR-Q_I3qa_NMg";
+const db = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const loginSection=document.getElementById("login");
+const dashboard=document.getElementById("dashboard");
+const modal=document.getElementById("orderModal");
 
-  const loginSection = document.getElementById("login");
-  const dashboard = document.getElementById("dashboard");
+document.getElementById("loginBtn").addEventListener("click",login);
+document.getElementById("logoutBtn").addEventListener("click",logout);
+document.getElementById("closeModal").addEventListener("click",closeModal);
 
-  document.getElementById("loginBtn").addEventListener("click", login);
-  document.getElementById("logoutBtn").addEventListener("click", logout);
+function setText(id,value){
+document.getElementById(id).textContent =
+value === null || value === undefined || value === "" ? "Not provided" : String(value);
+}
 
-  async function login() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const message = document.getElementById("loginMessage");
+async function login(){
+const email=document.getElementById("email").value.trim();
+const password=document.getElementById("password").value;
+const message=document.getElementById("loginMessage");
+message.textContent="Logging in...";
 
-    message.textContent = "Logging in...";
+const {error}=await db.auth.signInWithPassword({email,password});
+if(error){message.textContent=error.message;return;}
+await showDashboard();
+}
 
-    const { error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
+async function logout(){
+await db.auth.signOut();
+dashboard.classList.add("hidden");
+loginSection.classList.remove("hidden");
+}
 
-    if (error) {
-      message.textContent = error.message;
-      return;
-    }
+async function showDashboard(){
+loginSection.classList.add("hidden");
+dashboard.classList.remove("hidden");
+await loadOrders();
+}
 
-    await showDashboard();
-  }
+async function loadOrders(){
+const message=document.getElementById("statusMessage");
+const list=document.getElementById("ordersList");
+message.textContent="Loading orders...";
+list.replaceChildren();
 
-  async function logout() {
-    await db.auth.signOut();
-    dashboard.classList.add("hidden");
-    loginSection.classList.remove("hidden");
-  }
+const {data,error}=await db.from("orders")
+.select("*").order("created_at",{ascending:false});
 
-  async function showDashboard() {
-    loginSection.classList.add("hidden");
-    dashboard.classList.remove("hidden");
-    await loadOrders();
-  }
+if(error){message.textContent="Could not load orders: "+error.message;return;}
 
-  async function loadOrders() {
-    const message = document.getElementById("statusMessage");
-    const list = document.getElementById("ordersList");
+document.getElementById("orderCount").textContent=data.length;
 
-    message.textContent = "Loading orders...";
-    list.replaceChildren();
+const sales=data.filter(o=>o.status!=="Cancelled")
+.reduce((sum,o)=>sum+Number(o.total||0),0);
 
-    const { data, error } = await db
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
+document.getElementById("totalSales").textContent="EGP "+sales.toFixed(2);
 
-    if (error) {
-      message.textContent = "Could not load orders: " + error.message;
-      return;
-    }
+if(data.length===0){message.textContent="No orders yet.";return;}
+message.textContent="";
 
-    document.getElementById("orderCount").textContent = data.length;
+data.forEach(order=>{
+const tr=document.createElement("tr");
 
-    const sales = data
-      .filter(order => order.status !== "Cancelled")
-      .reduce((sum, order) => sum + Number(order.total || 0), 0);
+[
+order.order_reference||order.id,
+order.customer_name,
+order.phone,
+"EGP "+Number(order.total||0).toFixed(2)
+].forEach(value=>{
+const td=document.createElement("td");
+td.textContent=value||"";
+tr.appendChild(td);
+});
 
-    document.getElementById("totalSales").textContent =
-      "EGP " + sales.toFixed(2);
+const statusCell=document.createElement("td");
+const select=document.createElement("select");
 
-    if (data.length === 0) {
-      message.textContent = "No orders yet.";
-      return;
-    }
+["Pending","Processing","Shipped","Delivered","Cancelled"].forEach(status=>{
+const option=document.createElement("option");
+option.value=status;
+option.textContent=status;
+select.appendChild(option);
+});
 
-    message.textContent = "";
+select.value=order.status||"Pending";
 
-    data.forEach(order => {
-      const tr = document.createElement("tr");
+select.addEventListener("click",event=>event.stopPropagation());
 
-      [
-        order.order_reference || order.id,
-        order.customer_name || "",
-        order.phone || "",
-        "EGP " + Number(order.total || 0).toFixed(2)
-      ].forEach(value => {
-        const td = document.createElement("td");
-        td.textContent = value;
-        tr.appendChild(td);
-      });
+select.addEventListener("change",async event=>{
+event.stopPropagation();
+select.disabled=true;
 
-      const statusCell = document.createElement("td");
-      const select = document.createElement("select");
+const {error}=await db.from("orders")
+.update({status:select.value}).eq("id",order.id);
 
-      ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
-        .forEach(status => {
-          const option = document.createElement("option");
-          option.value = status;
-          option.textContent = status;
-          select.appendChild(option);
-        });
+if(error){
+message.textContent="Update failed: "+error.message;
+select.value=order.status||"Pending";
+}else{
+order.status=select.value;
+message.textContent="Order status updated.";
+setText("dStatus",order.status);
+}
+select.disabled=false;
+});
 
-      select.value = order.status || "Pending";
+statusCell.appendChild(select);
+tr.appendChild(statusCell);
 
-      select.addEventListener("change", async () => {
-        select.disabled = true;
+tr.addEventListener("click",()=>showOrder(order));
+list.appendChild(tr);
+});
+}
 
-        const { error } = await db
-          .from("orders")
-          .update({ status: select.value })
-          .eq("id", order.id);
+function showOrder(order){
+setText("dReference",order.order_reference||order.id);
+setText("dName",order.customer_name);
+setText("dPhone",order.phone);
+setText("dEmail",order.email);
+setText("dAddress",order.address);
+setText("dTotal","EGP "+Number(order.total||0).toFixed(2));
+setText("dPayment",order.payment_method);
+setText("dStatus",order.status);
+setText("dNotes",order.notes);
 
-        if (error) {
-          message.textContent = "Update failed: " + error.message;
-          select.value = order.status || "Pending";
-        } else {
-          order.status = select.value;
-          message.textContent = "Order status updated.";
-        }
+const items=document.getElementById("items");
+items.textContent=order.items
+? JSON.stringify(order.items,null,2)
+: "No product details provided";
 
-        select.disabled = false;
-      });
+modal.classList.remove("hidden");
+}
 
-      statusCell.appendChild(select);
-      tr.appendChild(statusCell);
-      list.appendChild(tr);
-    });
-  }
+function closeModal(){
+modal.classList.add("hidden");
+}
 
-  async function checkLogin() {
-    const { data } = await db.auth.getSession();
+async function checkLogin(){
+const {data}=await db.auth.getSession();
+if(data.session)await showDashboard();
+}
 
-    if (data.session) {
-      await showDashboard();
-    }
-  }
-
-  checkLogin();
+checkLogin();
 </script>
-
 </body>
 </html>
