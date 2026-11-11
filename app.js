@@ -244,3 +244,45 @@ Notes: ${data.notes || "-"}`;
       "Could not save your order. Please try again.";
   }
 };
+const trackButton = document.getElementById("trackButton");
+
+if (trackButton) {
+  trackButton.addEventListener("click", async () => {
+    const orderReference = document.getElementById("trackReference").value.trim();
+    const phone = document.getElementById("trackPhone").value.trim();
+    const result = document.getElementById("trackResult");
+
+    if (!orderReference || !phone) {
+      result.textContent = "Please enter your order reference and phone number.";
+      return;
+    }
+
+    result.textContent = "Checking order...";
+
+    try {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/track-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+          order_reference: orderReference,
+          phone: phone
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        result.textContent = data.error || "Could not find order.";
+        return;
+      }
+
+      result.textContent = `Order ${data.order_reference}: ${data.status}`;
+    } catch {
+      result.textContent = "Could not check your order. Please try again.";
+    }
+  });
+}
