@@ -230,10 +230,25 @@ setText("dStatus",order.status);
 setText("dNotes",order.notes);
 
 const items=document.getElementById("items");
-items.textContent=order.items
-? JSON.stringify(order.items,null,2)
-: "No product details provided";
+items.innerHTML = "";
 
+if (Array.isArray(order.items) && order.items.length > 0) {
+    order.items.forEach(item => {
+        const product = document.createElement("div");
+        product.style.cssText = "padding:12px 0;border-bottom:1px solid #444;";
+
+        const name = document.createElement("strong");
+        name.textContent = item.name || "Product";
+
+        const details = document.createElement("div");
+        details.textContent = `Size: ${item.size || "-"} | Quantity: ${item.qty || 1} | Price: EGP ${Number(item.price || 0).toFixed(2)}`;
+
+        product.append(name, details);
+        items.appendChild(product);
+    });
+} else {
+    items.textContent = "No product details provided";
+}
 modal.classList.remove("hidden");
 }
 
