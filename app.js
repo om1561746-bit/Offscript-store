@@ -264,8 +264,8 @@ if (trackButton) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
+         "apikey": SUPABASE_PUBLISHABLE_KEY,
+"Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
         },
         body: JSON.stringify({
           order_reference: orderReference,
