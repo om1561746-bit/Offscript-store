@@ -1,6 +1,8 @@
-const products = window.OFFSPCRIPT_PRODUCTS || [];
+
 const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_HQULCRRENKLYll-lslrR-Q_I3qa_NMg";
+
+let products = [];
 let cart = JSON.parse(localStorage.getItem("offspcript-cart") || "[]");
 let activeFilter = "all";
 
@@ -12,44 +14,112 @@ function save() {
   renderCart();
 }
 
+async function loadProducts() {
+  const list = $("products");
+  list.innerHTML = '<p class="muted">Loading products...</p>';
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?select=name,price,description,image_url,color,size,status,created_at&order=created_at.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+        }
+      }
+    );
+
+    if (!response.ok) throw new Error(await response.text());
+
+    const data = await response.json();
+
+    products = data.map((p, index) => ({
+      id: `${p.name}-${p.color || ""}-${p.size || ""}-${p.created_at || index}`,
+      name: p.name,
+      price: Number(p.price),
+      description: p.description || "",
+      image: p.image_url || "",
+      color: p.color || "",
+      sizes: String(p.size || "One Size").split(",").map(s => s.trim()),
+      status: String(p.status || "Available").toLowerCase().trim()
+    }));
+
+    renderProducts();
+
+  } catch (error) {
+    console.error(error);
+    list.innerHTML =
+      '<p class="muted">Could not load products. Please refresh the page.</p>';
+  }
+}
+
+function getStatus(status) {
+  const value = status.replace(/[\s_-]/g, "");
+  if (value === "soldout") return "SOLD OUT";
+  if (value === "comingsoon") return "COMING SOON";
+  return "AVAILABLE";
+}
+
 function renderProducts() {
   const list = $("products");
   list.innerHTML = "";
 
-  products
-    .filter(p => activeFilter === "all" || p.category === activeFilter)
-    .forEach(p => {
-      const card = document.createElement("article");
-      card.className = "product-card";
+  const visibleProducts = products.filter(p =>
+    activeFilter === "all" || !p.category || p.category === activeFilter
+  );
 
-      const image = p.image
-        ? `<img src="${p.image}" alt="${p.name}">`
-        : `<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>`;
+  if (!visibleProducts.length) {
+    list.innerHTML = '<p class="muted">No products available.</p>';
+    return;
+  }
 
-      card.innerHTML = `
-        <div class="product-image">
-          ${image}
-          <span class="product-tag">${p.tag || "OFFSPCRIPT"}</span>
-        </div>
-        <div class="product-info">
-          <div>
-            <div class="product-name">${p.name}</div>
-            <div class="product-meta">${p.description || ""}</div>
-            <div class="product-price">${money(p.price)}</div>
+  visibleProducts.forEach(p => {
+    const card = document.createElement("article");
+    card.className = "product-card";
+
+    const status = getStatus(p.status);
+    const available = status === "AVAILABLE";
+
+    const image = p.image
+      ? `<img src="${p.image}" alt="${p.name}">`
+      : `<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>`;
+
+    card.innerHTML = `
+      <div class="product-image">
+        ${image}
+        <span class="product-tag">${status}</span>
+      </div>
+      <div class="product-info">
+        <div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-meta">
+            ${p.description}
+            ${p.color ? `<br>Color: ${p.color}` : ""}
+            ${p.sizes.length ? `<br>Size: ${p.sizes.join(", ")}` : ""}
           </div>
-          <button class="add-button">ADD +</button>
-        </div>`;
+          <div class="product-price">${money(p.price)}</div>
+        </div>
+        <button class="add-button" ${available ? "" : "disabled"}>
+          ${available ? "ADD +" : status}
+        </button>
+      </div>`;
 
+    if (available) {
       card.querySelector("button").onclick = () => add(p.id);
-      list.appendChild(card);
-    });
+    } else {
+      card.querySelector("button").style.opacity = "0.5";
+      card.querySelector("button").style.cursor = "not-allowed";
+    }
+
+    list.appendChild(card);
+  });
 }
 
 function add(id) {
   const p = products.find(x => x.id === id);
-  if (!p) return;
+  if (!p || getStatus(p.status) !== "AVAILABLE") return;
 
-  const firstSize = p.sizes?.[0] || "One Size";
+  const firstSize = p.sizes[0] || "One Size";
   const existing = cart.find(x => x.id === id && x.size === firstSize);
 
   if (existing) {
@@ -148,7 +218,6 @@ document.querySelectorAll(".filter").forEach(button => {
     document.querySelectorAll(".filter").forEach(x =>
       x.classList.remove("active")
     );
-
     button.classList.add("active");
     activeFilter = button.dataset.filter;
     renderProducts();
@@ -160,15 +229,9 @@ $("checkoutForm").onsubmit = async event => {
   if (!cart.length) return;
 
   const form = event.target;
-  const data = Object.fromEntries(
-    new FormData(form).entries()
-  );
+  const data = Object.fromEntries(new FormData(form).entries());
 
-  const total = cart.reduce(
-    (s, x) => s + x.price * x.qty,
-    0
-  );
-
+  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const reference = "OFF-" + Date.now().toString().slice(-7);
 
   const orderData = {
@@ -178,7 +241,7 @@ $("checkoutForm").onsubmit = async event => {
     email: data.email || null,
     address: data.address,
     items: cart,
-    total: total,
+    total,
     payment_method: "Cash on Delivery",
     status: "Pending",
     notes: data.notes || null
@@ -189,45 +252,18 @@ $("checkoutForm").onsubmit = async event => {
   msg.textContent = "Saving your order...";
 
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLISHABLE_KEY,
-          "Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-          "Prefer": "return=minimal"
-        },
-        body: JSON.stringify(orderData)
-      }
-    );
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify(orderData)
+    });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error);
-    }
-
-    const message = `OFFSPCRIPT ORDER ${reference}
-Name: ${data.name}
-Phone: ${data.phone}
-Address: ${data.address}
-Payment: Cash on Delivery
-Items:
-${cart.map(x =>
-  `${x.name} / ${x.size} x${x.qty} — ${money(x.price * x.qty)}`
-).join("\n")}
-Total: ${money(total)}
-Notes: ${data.notes || "-"}`;
-
-    const whatsapp = window.OFFSPCRIPT_WHATSAPP || "";
-
-    if (whatsapp) {
-      window.open(
-        `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`,
-        "_blank"
-      );
-    }
+    if (!response.ok) throw new Error(await response.text());
 
     msg.className = "form-message success";
     msg.textContent =
@@ -240,38 +276,42 @@ Notes: ${data.notes || "-"}`;
   } catch (error) {
     console.error(error);
     msg.className = "form-message error";
-    msg.textContent =
-      "Could not save your order. Please try again.";
+    msg.textContent = "Could not save your order. Please try again.";
   }
 };
-const trackButton = document.getElementById("trackButton");
+
+const trackButton = $("trackButton");
 
 if (trackButton) {
   trackButton.addEventListener("click", async () => {
-    const orderReference = document.getElementById("trackReference").value.trim();
-    const phone = document.getElementById("trackPhone").value.trim();
-    const result = document.getElementById("trackResult");
+    const orderReference = $("trackReference").value.trim();
+    const phone = $("trackPhone").value.trim();
+    const result = $("trackResult");
 
     if (!orderReference || !phone) {
-      result.textContent = "Please enter your order reference and phone number.";
+      result.textContent =
+        "Please enter your order reference and phone number.";
       return;
     }
 
     result.textContent = "Checking order...";
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/track-order`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-         "apikey": SUPABASE_PUBLISHABLE_KEY,
-"Authorization": `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-        },
-        body: JSON.stringify({
-          order_reference: orderReference,
-          phone: phone
-        })
-      });
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/track-order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            order_reference: orderReference,
+            phone
+          })
+        }
+      );
 
       const data = await response.json();
 
@@ -280,9 +320,15 @@ if (trackButton) {
         return;
       }
 
-      result.textContent = `Order ${data.order_reference}: ${data.status}`;
+      result.textContent =
+        `Order ${data.order_reference}: ${data.status}`;
+
     } catch {
-      result.textContent = "Could not check your order. Please try again.";
+      result.textContent =
+        "Could not check your order. Please try again.";
     }
   });
 }
+
+renderCart();
+loadProducts();
