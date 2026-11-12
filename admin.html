@@ -396,15 +396,18 @@ document.getElementById("productForm").addEventListener("submit", async (event) 
       imageUrl = imageData.publicUrl;
     }
 
-    const product = {
-      name,
-      description,
-      price,
-      image_url: imageUrl || null,
-      sizes,
-      colors,
-      status
-    };
+   const category = document.getElementById("productCategory").value;
+
+const product = {
+  name,
+  category,
+  description,
+  price,
+  image_url: imageUrl || null,
+  sizes,
+  colors,
+  status
+};
 
     const result = id
       ? await db.from("products").update(product).eq("id", id)
