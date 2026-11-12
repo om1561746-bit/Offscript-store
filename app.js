@@ -383,59 +383,53 @@ if ($("checkoutForm")) {
 const trackButton = $("trackButton");
 
 if (trackButton) {
-  trackButton.addEventListener("click", async () => {
-    const orderReference = $("trackReference")?.value.trim();
-    const phone = $("trackPhone")?.value.trim();
-    const result = $("trackResult");
+  
+trackButton.addEventListener("click", async () => {
+  const customerName = $("trackName")?.value.trim();
+  const email = $("trackEmail")?.value.trim();
+  const result = $("trackResult");
 
-    if (!orderReference || !phone) {
-      if (result) {
-        result.textContent =
-          "Please enter your order reference and phone number.";
+  if (!customerName || !email) {
+    if (result) {
+      result.textContent = "Please enter your name and email address.";
+    }
+    return;
+  }
+
+  if (result) result.textContent = "Checking order...";
+
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/track-order`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+        },
+        body: JSON.stringify({
+          customer_name: customerName,
+          email: email
+        })
       }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      if (result) result.textContent = data.error || "Could not find order.";
       return;
     }
 
-    if (result) result.textContent = "Checking order...";
-
-    try {
-      const response = await fetch(
-        `${SUPABASE_URL}/functions/v1/track-order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-          },
-          body: JSON.stringify({
-            order_reference: orderReference,
-            phone
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        if (result) result.textContent = data.error || "Could not find order.";
-        return;
-      }
-
-      if (result) {
-        result.textContent =
-          `Order ${data.order_reference}: ${data.status}`;
-      }
-
-    } catch (error) {
-      console.error("Tracking error:", error);
-      if (result) {
-        result.textContent =
-          "Could not check your order. Please try again.";
-      }
+    if (result) {
+      result.textContent = `Order Status: ${data.status}`;
     }
-  });
-}
 
-renderCart();
-loadProducts();
+  } catch (error) {
+    console.error("Tracking error:", error);
+    if (result) {
+      result.textContent = "Could not check your order. Please try again.";
+    }
+  }
+});
