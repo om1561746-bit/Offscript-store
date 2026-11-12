@@ -13,13 +13,15 @@ body{margin:0;padding:25px;background:#111;color:#f4efdf;font-family:Arial,sans-
 .accent{color:#caff45}
 header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #444;padding-bottom:20px}
 header img{width:65px}
-button,input,select{font:inherit;padding:11px;border-radius:6px}
+button,input,select,textarea{font:inherit;padding:11px;border-radius:6px}
 button{background:#caff45;color:#111;border:0;font-weight:bold;cursor:pointer}
-input{width:100%;background:#201f1b;color:white;border:1px solid #555;margin:8px 0 15px}
+button:disabled{opacity:.5;cursor:not-allowed}
+input,textarea{width:100%;background:#201f1b;color:white;border:1px solid #555;margin:8px 0 15px}
+textarea{min-height:90px;resize:vertical}
 .panel{max-width:420px;margin:70px auto;background:#201f1b;padding:25px;border-radius:10px}
 .hidden{display:none!important}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin:25px 0}
-.card,.orders,.details{background:#201f1b;padding:20px;border-radius:10px}
+.card,.orders,.details,.admin-section{background:#201f1b;padding:20px;border-radius:10px}
 .card p{color:#aaa}
 .card h2{font-size:27px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -36,11 +38,25 @@ select{background:#111;color:white;border:1px solid #555}
 .detail-line{padding:10px 0;border-bottom:1px solid #444;overflow-wrap:anywhere}
 .detail-line strong{color:#caff45;display:block;margin-bottom:5px}
 #items{white-space:pre-wrap;line-height:1.6}
-@media(max-width:500px){body{padding:15px}.stats{grid-template-columns:1fr}}
+.admin-section{margin-top:25px}
+.admin-section form{max-width:550px}
+.admin-section label{display:block;margin-top:12px}
+.product-admin-card{padding:15px;margin:15px 0;background:#111;border:1px solid #444;border-radius:8px}
+.product-admin-card img{display:block;margin-bottom:10px}
+.product-admin-card button{margin:5px 5px 5px 0}
+.size-status-row{margin:12px 0}
+.size-status-row select{width:100%;margin-top:5px}
+#productCategory,#productStatus{width:100%;margin:8px 0 15px}
+@media(max-width:500px){
+ body{padding:15px}
+ .stats{grid-template-columns:1fr}
+ .top{align-items:flex-start}
+}
 </style>
 </head>
 
 <body>
+
 <header>
 <img src="logo.png" alt="OFFSPCRIPT">
 <span class="accent">ADMIN</span>
@@ -57,70 +73,101 @@ select{background:#111;color:white;border:1px solid #555}
 </section>
 
 <main id="dashboard" class="hidden">
+
 <div class="top">
 <h1>Dashboard<span class="accent">.</span></h1>
 <button id="logoutBtn">LOG OUT</button>
 </div>
 
 <section class="stats">
-<div class="card"><p>ORDERS</p><h2 id="orderCount">0</h2></div>
-<div class="card"><p>TOTAL SALES</p><h2 id="totalSales">EGP 0</h2></div>
+<div class="card">
+<p>ORDERS</p>
+<h2 id="orderCount">0</h2>
+</div>
+<div class="card">
+<p>TOTAL SALES</p>
+<h2 id="totalSales">EGP 0</h2>
+</div>
 </section>
 
 <section class="orders">
 <h3>Recent Orders</h3>
 <p id="statusMessage" class="message"></p>
+
 <div class="table-wrap">
 <table>
 <thead>
-<tr><th>Order</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th></tr>
+<tr>
+<th>Order</th>
+<th>Customer</th>
+<th>Phone</th>
+<th>Total</th>
+<th>Status</th>
+</tr>
 </thead>
 <tbody id="ordersList"></tbody>
 </table>
 </div>
+
 <p style="color:#aaa">Click any order to see its details.</p>
 </section>
+
 <section class="admin-section" id="products-section">
-  <h2>MANAGE PRODUCTS</h2>
+<h2>MANAGE PRODUCTS</h2>
 
-  <form id="productForm">
-    <input type="hidden" id="productId">
+<form id="productForm">
+<input type="hidden" id="productId">
 
-    <input id="productName" type="text" placeholder="Product Name" required>
+<label>Product Name</label>
+<input id="productName" type="text" placeholder="Product Name" required>
+
+<label>Category</label>
 <select id="productCategory">
-  <option value="tshirt">T-Shirts</option>
-  <option value="shorts">Shorts</option>
+<option value="tshirt">T-Shirts</option>
+<option value="shorts">Shorts</option>
 </select>
-    <textarea id="productDescription" placeholder="Product Description"></textarea>
 
-    <input id="productPrice" type="number" placeholder="Price" min="0" step="0.01" required>
+<label>Description</label>
+<textarea id="productDescription" placeholder="Product Description"></textarea>
 
-    <input id="productImage" type="file" accept="image/*">
+<label>Price</label>
+<input id="productPrice" type="number" placeholder="Price" min="0" step="0.01" required>
 
-    <input id="productSizes" type="text" placeholder="Sizes: S, M, L, XL">
+<label>Product Image</label>
+<input id="productImage" type="file" accept="image/*">
+
+<label>Sizes</label>
+<input id="productSizes" type="text" placeholder="Sizes: S, M, L, XL">
+
 <div id="sizeStatusEditor"></div>
-    <input id="productColors" type="text" placeholder="Colors: Black, Cream">
 
-    <select id="productStatus">
-      <option value="available">Available</option>
-      <option value="sold_out">Sold Out</option>
-      <option value="coming_soon">Coming Soon</option>
-    </select>
+<label>Colors</label>
+<input id="productColors" type="text" placeholder="Colors: Black, Cream">
 
-    <button type="submit">SAVE PRODUCT</button>
-    <button type="button" id="cancelProductEdit">CANCEL</button>
-  </form>
+<label>Product Status</label>
+<select id="productStatus">
+<option value="available">Available</option>
+<option value="sold_out">Sold Out</option>
+<option value="coming_soon">Coming Soon</option>
+</select>
 
-  <div id="productsList"></div>
+<button type="submit" id="saveProductBtn">SAVE PRODUCT</button>
+<button type="button" id="cancelProductEdit">CANCEL</button>
+</form>
+
+<div id="productsList"></div>
 </section>
+
 </main>
 
 <div id="orderModal" class="modal hidden">
 <div class="details">
+
 <div class="top">
 <h2>Order Details<span class="accent">.</span></h2>
 <button id="closeModal">CLOSE</button>
 </div>
+
 <div class="detail-line"><strong>Order Reference</strong><span id="dReference"></span></div>
 <div class="detail-line"><strong>Customer Name</strong><span id="dName"></span></div>
 <div class="detail-line"><strong>Phone</strong><span id="dPhone"></span></div>
@@ -131,173 +178,286 @@ select{background:#111;color:white;border:1px solid #555}
 <div class="detail-line"><strong>Payment Method</strong><span id="dPayment"></span></div>
 <div class="detail-line"><strong>Status</strong><span id="dStatus"></span></div>
 <div class="detail-line"><strong>Customer Notes</strong><span id="dNotes"></span></div>
+
 </div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://vsaakjlblpyewjohravi.supabase.co";
+
+// Paste your existing Supabase PUBLISHABLE key below.
+// Do NOT use a Service Role or Secret key.
 const SUPABASE_KEY = "sb_publishable_HQULCRRENKLYll-lslrR-Q_I3qa_NMg";
 
-const db = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const loginSection=document.getElementById("login");
-const dashboard=document.getElementById("dashboard");
-const modal=document.getElementById("orderModal");
-
-document.getElementById("loginBtn").addEventListener("click",login);
-document.getElementById("logoutBtn").addEventListener("click",logout);
-document.getElementById("closeModal").addEventListener("click",closeModal);
-
-function setText(id,value){
-document.getElementById(id).textContent =
-value === null || value === undefined || value === "" ? "Not provided" : String(value);
-}
-
-async function login(){
-const email=document.getElementById("email").value.trim();
-const password=document.getElementById("password").value;
-const message=document.getElementById("loginMessage");
-message.textContent="Logging in...";
-
-const {error}=await db.auth.signInWithPassword({email,password});
-if(error){message.textContent=error.message;return;}
-await showDashboard();
-}
-
-async function logout(){
-await db.auth.signOut();
-dashboard.classList.add("hidden");
-loginSection.classList.remove("hidden");
-}
-
-async function showDashboard(){
-await loadProducts();
-    loginSection.classList.add("hidden");
-dashboard.classList.remove("hidden");
-await loadOrders();
-}
-
-async function loadOrders(){
-const message=document.getElementById("statusMessage");
-const list=document.getElementById("ordersList");
-message.textContent="Loading orders...";
-list.replaceChildren();
-
-const {data,error}=await db.from("orders")
-.select("*").order("created_at",{ascending:false});
-
-if(error){message.textContent="Could not load orders: "+error.message;return;}
-
-document.getElementById("orderCount").textContent=data.length;
-
-const sales=data.filter(o=>o.status!=="Cancelled")
-.reduce((sum,o)=>sum+Number(o.total||0),0);
-
-document.getElementById("totalSales").textContent="EGP "+sales.toFixed(2);
-
-if(data.length===0){message.textContent="No orders yet.";return;}
-message.textContent="";
-
-data.forEach(order=>{
-const tr=document.createElement("tr");
-
-[
-order.order_reference||order.id,
-order.customer_name,
-order.phone,
-"EGP "+Number(order.total||0).toFixed(2)
-].forEach(value=>{
-const td=document.createElement("td");
-td.textContent=value||"";
-tr.appendChild(td);
-});
-
-const statusCell=document.createElement("td");
-const select=document.createElement("select");
-
-["Pending","Processing","Shipped","Delivered","Cancelled"].forEach(status=>{
-const option=document.createElement("option");
-option.value=status;
-option.textContent=status;
-select.appendChild(option);
-});
-
-select.value=order.status||"Pending";
-
-select.addEventListener("click",event=>event.stopPropagation());
-
-select.addEventListener("change",async event=>{
-event.stopPropagation();
-select.disabled=true;
-
-const {error}=await db.from("orders")
-.update({status:select.value}).eq("id",order.id);
-
-if(error){
-message.textContent="Update failed: "+error.message;
-select.value=order.status||"Pending";
-}else{
-order.status=select.value;
-message.textContent="Order status updated.";
-setText("dStatus",order.status);
-}
-select.disabled=false;
-});
-
-statusCell.appendChild(select);
-tr.appendChild(statusCell);
-
-tr.addEventListener("click",()=>showOrder(order));
-list.appendChild(tr);
-});
-}
-
-function showOrder(order){
-setText("dReference",order.order_reference||order.id);
-setText("dName",order.customer_name);
-setText("dPhone",order.phone);
-setText("dEmail",order.email);
-setText("dAddress",order.address);
-setText("dTotal","EGP "+Number(order.total||0).toFixed(2));
-setText("dPayment",order.payment_method);
-setText("dStatus",order.status);
-setText("dNotes",order.notes);
-
-const items=document.getElementById("items");
-items.innerHTML = "";
-
-if (Array.isArray(order.items) && order.items.length > 0) {
-    order.items.forEach(item => {
-        const product = document.createElement("div");
-        product.style.cssText = "padding:12px 0;border-bottom:1px solid #444;";
-
-        const name = document.createElement("strong");
-        name.textContent = item.name || "Product";
-
-        const details = document.createElement("div");
-        details.textContent = `Size: ${item.size || "-"} | Quantity: ${item.qty || 1} | Price: EGP ${Number(item.price || 0).toFixed(2)}`;
-
-        product.append(name, details);
-        items.appendChild(product);
-    });
-} else {
-    items.textContent = "No product details provided";
-}
-modal.classList.remove("hidden");
-}
-
-function closeModal(){
-modal.classList.add("hidden");
-}
-
-async function checkLogin(){
-const {data}=await db.auth.getSession();
-if(data.session)await showDashboard();
-}
-
-checkLogin();
+const loginSection = document.getElementById("login");
+const dashboard = document.getElementById("dashboard");
+const modal = document.getElementById("orderModal");
 
 let editingProductImageUrl = "";
+
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("logoutBtn").addEventListener("click", logout);
+document.getElementById("closeModal").addEventListener("click", closeModal);
+
+function setText(id, value) {
+  document.getElementById(id).textContent =
+    value === null || value === undefined || value === ""
+      ? "Not provided"
+      : String(value);
+}
+
+/* LOGIN */
+
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const message = document.getElementById("loginMessage");
+  const button = document.getElementById("loginBtn");
+
+  if (!email || !password) {
+    message.textContent = "Enter your email and password.";
+    return;
+  }
+
+  button.disabled = true;
+  message.textContent = "Logging in...";
+
+  try {
+    const { error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    message.textContent = "";
+    await showDashboard();
+
+  } catch (error) {
+    message.textContent = error.message || "Login failed.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function logout() {
+  const { error } = await db.auth.signOut();
+
+  if (error) {
+    alert("Logout failed: " + error.message);
+    return;
+  }
+
+  dashboard.classList.add("hidden");
+  loginSection.classList.remove("hidden");
+  document.getElementById("password").value = "";
+}
+
+async function showDashboard() {
+  loginSection.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+
+  await loadProducts();
+  await loadOrders();
+}
+
+/* ORDERS */
+
+async function loadOrders() {
+  const message = document.getElementById("statusMessage");
+  const list = document.getElementById("ordersList");
+
+  message.textContent = "Loading orders...";
+  list.replaceChildren();
+
+  const { data, error } = await db
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    message.textContent = "Could not load orders: " + error.message;
+    return;
+  }
+
+  document.getElementById("orderCount").textContent = data.length;
+
+  const sales = data
+    .filter(order => order.status !== "Cancelled")
+    .reduce((sum, order) => sum + Number(order.total || 0), 0);
+
+  document.getElementById("totalSales").textContent =
+    "EGP " + sales.toFixed(2);
+
+  if (data.length === 0) {
+    message.textContent = "No orders yet.";
+    return;
+  }
+
+  message.textContent = "";
+
+  data.forEach(order => {
+    const tr = document.createElement("tr");
+
+    [
+      order.order_reference || order.id,
+      order.customer_name,
+      order.phone,
+      "EGP " + Number(order.total || 0).toFixed(2)
+    ].forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value || "";
+      tr.appendChild(td);
+    });
+
+    const statusCell = document.createElement("td");
+    const select = document.createElement("select");
+
+    ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
+      .forEach(status => {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+        select.appendChild(option);
+      });
+
+    select.value = order.status || "Pending";
+
+    select.addEventListener("click", event => {
+      event.stopPropagation();
+    });
+
+    select.addEventListener("change", async event => {
+      event.stopPropagation();
+      select.disabled = true;
+
+      const { error } = await db
+        .from("orders")
+        .update({ status: select.value })
+        .eq("id", order.id);
+
+      if (error) {
+        message.textContent = "Update failed: " + error.message;
+        select.value = order.status || "Pending";
+      } else {
+        order.status = select.value;
+        message.textContent = "Order status updated.";
+        setText("dStatus", order.status);
+
+        const sales = data
+          .filter(item => item.status !== "Cancelled")
+          .reduce((sum, item) => sum + Number(item.total || 0), 0);
+
+        document.getElementById("totalSales").textContent =
+          "EGP " + sales.toFixed(2);
+      }
+
+      select.disabled = false;
+    });
+
+    statusCell.appendChild(select);
+    tr.appendChild(statusCell);
+
+    tr.addEventListener("click", () => showOrder(order));
+    list.appendChild(tr);
+  });
+}
+
+function showOrder(order) {
+  setText("dReference", order.order_reference || order.id);
+  setText("dName", order.customer_name);
+  setText("dPhone", order.phone);
+  setText("dEmail", order.email);
+  setText("dAddress", order.address);
+  setText("dTotal", "EGP " + Number(order.total || 0).toFixed(2));
+  setText("dPayment", order.payment_method);
+  setText("dStatus", order.status);
+  setText("dNotes", order.notes);
+
+  const items = document.getElementById("items");
+  items.replaceChildren();
+
+  if (Array.isArray(order.items) && order.items.length > 0) {
+    order.items.forEach(item => {
+      const product = document.createElement("div");
+      product.style.cssText =
+        "padding:12px 0;border-bottom:1px solid #444;";
+
+      const name = document.createElement("strong");
+      name.textContent = item.name || "Product";
+
+      const details = document.createElement("div");
+      details.textContent =
+        `Size: ${item.size || "-"} | Quantity: ${item.qty || 1} | Price: EGP ${Number(item.price || 0).toFixed(2)}`;
+
+      product.append(name, details);
+      items.appendChild(product);
+    });
+  } else {
+    items.textContent = "No product details provided";
+  }
+
+  modal.classList.remove("hidden");
+}
+
+function closeModal() {
+  modal.classList.add("hidden");
+}
+
+/* PER-SIZE STATUS EDITOR */
+
+function renderSizeStatusEditor(existing = {}) {
+  const container = document.getElementById("sizeStatusEditor");
+  const sizes = document.getElementById("productSizes").value
+    .split(",")
+    .map(size => size.trim())
+    .filter(Boolean);
+
+  const previous = {};
+
+  container.querySelectorAll("[data-size-status]").forEach(select => {
+    previous[select.dataset.sizeStatus] = select.value;
+  });
+
+  container.replaceChildren();
+
+  sizes.forEach(size => {
+    const row = document.createElement("div");
+    row.className = "size-status-row";
+
+    const label = document.createElement("label");
+    label.textContent = size + " status:";
+
+    const select = document.createElement("select");
+    select.dataset.sizeStatus = size;
+
+    [
+      ["available", "Available"],
+      ["sold_out", "Sold Out"],
+      ["coming_soon", "Coming Soon"]
+    ].forEach(([value, text]) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = text;
+      select.appendChild(option);
+    });
+
+    select.value =
+      previous[size] || existing[size] || "available";
+
+    row.append(label, select);
+    container.appendChild(row);
+  });
+}
+
+document.getElementById("productSizes").addEventListener("input", () => {
+  renderSizeStatusEditor();
+});
+
+/* PRODUCTS */
+
 async function loadProducts() {
   const list = document.getElementById("productsList");
   list.textContent = "Loading products...";
@@ -317,8 +477,8 @@ async function loadProducts() {
     return;
   }
 
-  const escapeHTML = (value) =>
-    String(value ?? "").replace(/[&<>"']/g, (char) => ({
+  const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
@@ -329,33 +489,36 @@ async function loadProducts() {
   list.innerHTML = data.map(product => `
     <div class="product-admin-card">
       ${product.image_url ? `
-        <img src="${escapeHTML(product.image_url)}"
-             alt="${escapeHTML(product.name)}"
-             style="width:100px;height:100px;object-fit:cover;">
+        <img
+          src="${escapeHTML(product.image_url)}"
+          alt="${escapeHTML(product.name)}"
+          style="width:100px;height:100px;object-fit:cover;"
+        >
       ` : ""}
 
       <h3>${escapeHTML(product.name)}</h3>
-      <p>Price: ${escapeHTML(product.price)}</p>
+      <p>Category: ${escapeHTML(product.category || "")}</p>
+      <p>Price: EGP ${escapeHTML(product.price)}</p>
       <p>Status: ${escapeHTML(product.status)}</p>
 
-      <button type="button" data-edit="${product.id}">
+      <button type="button" data-edit="${escapeHTML(product.id)}">
         EDIT
       </button>
 
-      <button type="button" data-delete="${product.id}">
+      <button type="button" data-delete="${escapeHTML(product.id)}">
         DELETE
       </button>
     </div>
   `).join("");
 }
-document.getElementById("productSizes").addEventListener("input", () => {
-  renderSizeStatusEditor();
-});
-document.getElementById("productForm").addEventListener("submit", async (event) => {
+
+/* SAVE PRODUCT */
+
+document.getElementById("productForm").addEventListener("submit", async event => {
   event.preventDefault();
 
-  const button = event.submitter;
-  if (button) button.disabled = true;
+  const button = document.getElementById("saveProductBtn");
+  button.disabled = true;
 
   try {
     const id = document.getElementById("productId").value;
@@ -363,17 +526,26 @@ document.getElementById("productForm").addEventListener("submit", async (event) 
     const description = document.getElementById("productDescription").value.trim();
     const price = Number(document.getElementById("productPrice").value);
     const file = document.getElementById("productImage").files[0];
-    const sizes = document.getElementById("productSizes").value
-     const sizeStatus = {};
 
-document.querySelectorAll("#sizeStatusEditor [data-size-status]")
-  .forEach(select => {
-    sizeStatus[select.dataset.sizeStatus] = select.value;
-  });
-      .split(",").map(x => x.trim()).filter(Boolean);
+    const sizes = document.getElementById("productSizes").value
+      .split(",")
+      .map(size => size.trim())
+      .filter(Boolean);
+
+    const sizeStatus = {};
+
+    document.querySelectorAll("#sizeStatusEditor [data-size-status]")
+      .forEach(select => {
+        sizeStatus[select.dataset.sizeStatus] = select.value;
+      });
+
     const colors = document.getElementById("productColors").value
-      .split(",").map(x => x.trim()).filter(Boolean);
+      .split(",")
+      .map(color => color.trim())
+      .filter(Boolean);
+
     const status = document.getElementById("productStatus").value;
+    const category = document.getElementById("productCategory").value;
 
     if (!name || !Number.isFinite(price) || price < 0) {
       alert("Please enter a valid name and price.");
@@ -388,7 +560,8 @@ document.querySelectorAll("#sizeStatusEditor [data-size-status]")
         return;
       }
 
-      const filePath = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const filePath =
+        `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
       const { error: uploadError } = await db.storage
         .from("product-images")
@@ -403,19 +576,17 @@ document.querySelectorAll("#sizeStatusEditor [data-size-status]")
       imageUrl = imageData.publicUrl;
     }
 
-   const category = document.getElementById("productCategory").value;
-
-const product = {
-  name,
-  category,
-  description,
-  price,
-  image_url: imageUrl || null,
-   sizes,
-  size_status: sizeStatus,
-  colors,
-  status
-};
+    const product = {
+      name,
+      category,
+      description,
+      price,
+      image_url: imageUrl || null,
+      sizes,
+      size_status: sizeStatus,
+      colors,
+      status
+    };
 
     const result = id
       ? await db.from("products").update(product).eq("id", id)
@@ -424,21 +595,24 @@ const product = {
     if (result.error) throw result.error;
 
     alert("Product saved successfully!");
+
     document.getElementById("productForm").reset();
-    renderSizeStatusEditor({});
     document.getElementById("productId").value = "";
     editingProductImageUrl = "";
+    renderSizeStatusEditor({});
 
     await loadProducts();
 
   } catch (error) {
     alert("Could not save product: " + error.message);
   } finally {
-    if (button) button.disabled = false;
+    button.disabled = false;
   }
 });
 
-document.getElementById("productsList").addEventListener("click", async (event) => {
+/* EDIT AND DELETE */
+
+document.getElementById("productsList").addEventListener("click", async event => {
   const editButton = event.target.closest("[data-edit]");
   const deleteButton = event.target.closest("[data-delete]");
 
@@ -462,9 +636,12 @@ document.getElementById("productsList").addEventListener("click", async (event) 
     document.getElementById("productPrice").value = data.price;
     document.getElementById("productCategory").value = data.category || "tshirt";
     document.getElementById("productSizes").value = (data.sizes || []).join(", ");
-   renderSizeStatusEditor(data.size_status || {});
+
+    renderSizeStatusEditor(data.size_status || {});
+
     document.getElementById("productColors").value = (data.colors || []).join(", ");
-    document.getElementById("productStatus").value = data.status;
+    document.getElementById("productStatus").value = data.status || "available";
+
     editingProductImageUrl = data.image_url || "";
 
     document.getElementById("productForm").scrollIntoView({
@@ -490,12 +667,33 @@ document.getElementById("productsList").addEventListener("click", async (event) 
   }
 });
 
+/* CANCEL EDIT */
+
 document.getElementById("cancelProductEdit").addEventListener("click", () => {
   document.getElementById("productForm").reset();
- renderSizeStatusEditor({});
   document.getElementById("productId").value = "";
   editingProductImageUrl = "";
+  renderSizeStatusEditor({});
 });
+
+/* CHECK EXISTING SESSION */
+
+async function checkLogin() {
+  try {
+    const { data, error } = await db.auth.getSession();
+
+    if (error) throw error;
+
+    if (data.session) {
+      await showDashboard();
+    }
+  } catch (error) {
+    document.getElementById("loginMessage").textContent =
+      "Session error: " + error.message;
+  }
+}
+
+checkLogin();
 
 </script>
 </body>
