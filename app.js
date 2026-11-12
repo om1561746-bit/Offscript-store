@@ -29,7 +29,7 @@ async function loadProducts() {
 
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
+     `${SUPABASE_URL}/rest/v1/products?select=id,name,category,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -42,16 +42,17 @@ async function loadProducts() {
 
     const data = await response.json();
 
-    products = data.map(p => ({
-      id: String(p.id),
-      name: p.name || "",
-      price: Number(p.price || 0),
-      description: p.description || "",
-      image: p.image_url || "",
-      colors: Array.isArray(p.colors) ? p.colors : [],
-      sizes: Array.isArray(p.sizes) ? p.sizes : [],
-      status: p.status || "available"
-    }));
+  products = data.map(p => ({
+  id: String(p.id),
+  name: p.name || "",
+  category: p.category || "tshirt",
+  price: Number(p.price || 0),
+  description: p.description || "",
+  image: p.image_url || "",
+  colors: Array.isArray(p.colors) ? p.colors : [],
+  sizes: Array.isArray(p.sizes) ? p.sizes : [],
+  status: p.status || "available"
+}));
 
     renderProducts();
 
@@ -69,8 +70,7 @@ function renderProducts() {
 
   const visibleProducts = products.filter(p =>
     activeFilter === "all" ||
-    !p.category ||
-    p.category === activeFilter
+p.category === activeFilter
   );
 
   if (!visibleProducts.length) {
@@ -152,62 +152,23 @@ function renderProducts() {
   });
 }
 
-function add(id) {
+function add(id, selectedSize) {
   const p = products.find(x => x.id === String(id));
   if (!p || getStatus(p.status) !== "AVAILABLE") return;
 
-  const firstSize = p.sizes[0] || "One Size";
+  if (!selectedSize) {
+    alert("Please select a size first.");
+    return;
+  }
+
   const existing = cart.find(
-    x => String(x.id) === String(id) && x.size === firstSize
+    x => String(x.id) === String(id) && x.size === selectedSize
   );
 
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      size: firstSize,
-      qty: 1
-    });
-  }
-
-  save();
-  openCart();
-}
-
-function renderCart() {
-  const countElement = $("cartCount");
-  const drawerCount = $("drawerCount");
-  const subtotal = $("subtotal");
-  const checkoutTotal = $("checkoutTotal");
-  const wrap = $("cartItems");
-
-  if (!wrap) return;
-
-  const count = cart.reduce((s, x) => s + Number(x.qty || 0), 0);
-  const total = cart.reduce(
-    (s, x) => s + Number(x.price || 0) * Number(x.qty || 0),
-    0
-  );
-
-  if (countElement) countElement.textContent = count;
-  if (drawerCount) drawerCount.textContent = `(${count})`;
-  if (subtotal) subtotal.textContent = money(total);
-  if (checkoutTotal) checkoutTotal.textContent = money(total);
-
-  if (!cart.length) {
-    wrap.innerHTML = '<p class="muted">Your bag is empty.</p>';
-    return;
-  }
-
-  wrap.innerHTML = "";
-
-  cart.forEach((x, i) => {
-    const row = document.createElement("div");
-    row.className = "cart-row";
-
+ 
     const details = document.createElement("div");
 
     const name = document.createElement("strong");
@@ -218,6 +179,13 @@ function renderCart() {
 
     const lineTotal = document.createElement("small");
     lineTotal.textContent = money(x.price * x.qty);
+cart.push
+
+  wrap.innerHTML = "";
+
+  cart.forEach((x, i) => {
+    const row = document.createElement("div");
+    row.className = "cart-row";
 
     details.append(name, size, lineTotal);
 
