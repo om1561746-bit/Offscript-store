@@ -21,6 +21,16 @@ function getStatus(status) {
   return "AVAILABLE";
 }
 
+function getSizeStatus(product, size) {
+  if (getStatus(product.status) !== "AVAILABLE") {
+    return getStatus(product.status);
+  }
+
+  return getStatus(
+    (product.size_status || {})[size] || "available"
+  );
+}
+
 async function loadProducts() {
   const list = $("products");
   if (!list) return;
@@ -29,7 +39,7 @@ async function loadProducts() {
 
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=id,name,category,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,category,description,price,image_url,sizes,colors,status,size_status,created_at&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -51,6 +61,7 @@ async function loadProducts() {
       image: p.image_url || "",
       colors: Array.isArray(p.colors) ? p.colors : [],
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      size_status: p.size_status || {},
       status: p.status || "available"
     }));
 
@@ -146,8 +157,18 @@ function renderProducts() {
 
     sizes.forEach(size => {
       const option = document.createElement("option");
+      const sizeStatus = getSizeStatus(p, size);
+
       option.value = size;
-      option.textContent = size;
+      option.textContent =
+        sizeStatus === "AVAILABLE"
+          ? size
+          : `${size} — ${sizeStatus}`;
+
+      if (sizeStatus !== "AVAILABLE") {
+        option.disabled = true;
+      }
+
       sizeSelect.appendChild(option);
     });
 
@@ -179,6 +200,11 @@ function add(id, selectedSize) {
 
   if (!selectedSize) {
     alert("Please select a size first.");
+    return;
+  }
+
+  if (getSizeStatus(p, selectedSize) !== "AVAILABLE") {
+    alert("This size is sold out or unavailable.");
     return;
   }
 
@@ -383,56 +409,55 @@ if ($("checkoutForm")) {
 const trackButton = $("trackButton");
 
 if (trackButton) {
-  
-trackButton.addEventListener("click", async () => {
-  const customerName = $("trackName")?.value.trim();
-  const email = $("trackEmail")?.value.trim();
-  const result = $("trackResult");
+  trackButton.addEventListener("click", async () => {
+    const customerName = $("trackName")?.value.trim();
+    const email = $("trackEmail")?.value.trim();
+    const result = $("trackResult");
 
-  if (!customerName || !email) {
-    if (result) {
-      result.textContent = "Please enter your name and email address.";
-    }
-    return;
-  }
-
-  if (result) result.textContent = "Checking order...";
-
-  try {
-    const response = await fetch(
-      `${SUPABASE_URL}/functions/v1/track-order`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
-        },
-        body: JSON.stringify({
-          customer_name: customerName,
-          email: email
-        })
+    if (!customerName || !email) {
+      if (result) {
+        result.textContent = "Please enter your name and email address.";
       }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok || data.error) {
-      if (result) result.textContent = data.error || "Could not find order.";
       return;
     }
 
-    if (result) {
-      result.textContent = `Order Status: ${data.status}`;
-    }
+    if (result) result.textContent = "Checking order...";
 
-  } catch (error) {
-    console.error("Tracking error:", error);
-    if (result) {
-      result.textContent = "Could not check your order. Please try again.";
+    try {
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/track-order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+          },
+          body: JSON.stringify({
+            customer_name: customerName,
+            email: email
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        if (result) result.textContent = data.error || "Could not find order.";
+        return;
+      }
+
+      if (result) {
+        result.textContent = `Order Status: ${data.status}`;
+      }
+
+    } catch (error) {
+      console.error("Tracking error:", error);
+      if (result) {
+        result.textContent = "Could not check your order. Please try again.";
+      }
     }
-  }
-});
+  });
 }
 
 renderCart();
