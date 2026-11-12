@@ -29,7 +29,7 @@ async function loadProducts() {
 
   try {
     const response = await fetch(
-     `${SUPABASE_URL}/rest/v1/products?select=id,name,category,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,category,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -42,20 +42,19 @@ async function loadProducts() {
 
     const data = await response.json();
 
-  products = data.map(p => ({
-  id: String(p.id),
-  name: p.name || "",
-  category: p.category || "tshirt",
-  price: Number(p.price || 0),
-  description: p.description || "",
-  image: p.image_url || "",
-  colors: Array.isArray(p.colors) ? p.colors : [],
-  sizes: Array.isArray(p.sizes) ? p.sizes : [],
-  status: p.status || "available"
-}));
+    products = data.map(p => ({
+      id: String(p.id),
+      name: p.name || "",
+      category: p.category || "tshirt",
+      price: Number(p.price || 0),
+      description: p.description || "",
+      image: p.image_url || "",
+      colors: Array.isArray(p.colors) ? p.colors : [],
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      status: p.status || "available"
+    }));
 
     renderProducts();
-
   } catch (error) {
     console.error("Products loading error:", error);
     list.textContent = "Could not load products. Please refresh the page.";
@@ -69,8 +68,7 @@ function renderProducts() {
   list.innerHTML = "";
 
   const visibleProducts = products.filter(p =>
-    activeFilter === "all" ||
-p.category === activeFilter
+    activeFilter === "all" || p.category === activeFilter
   );
 
   if (!visibleProducts.length) {
@@ -124,8 +122,7 @@ p.category === activeFilter
     meta.className = "product-meta";
     meta.textContent = [
       p.description,
-      p.colors.length ? "Colors: " + p.colors.join(", ") : "",
-      p.sizes.length ? "Sizes: " + p.sizes.join(", ") : ""
+      p.colors.length ? "Colors: " + p.colors.join(", ") : ""
     ].filter(Boolean).join("\n");
 
     const price = document.createElement("div");
@@ -134,19 +131,43 @@ p.category === activeFilter
 
     details.append(name, meta, price);
 
+    const sizeSelect = document.createElement("select");
+    sizeSelect.className = "product-size-select";
+    sizeSelect.setAttribute("aria-label", "Choose size");
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "SELECT SIZE";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    sizeSelect.appendChild(placeholder);
+
+    const sizes = p.sizes.length ? p.sizes : ["One Size"];
+
+    sizes.forEach(size => {
+      const option = document.createElement("option");
+      option.value = size;
+      option.textContent = size;
+      sizeSelect.appendChild(option);
+    });
+
+    sizeSelect.disabled = !available;
+
     const button = document.createElement("button");
     button.className = "add-button";
     button.textContent = available ? "ADD +" : status;
     button.disabled = !available;
 
     if (available) {
-      button.onclick = () => add(p.id);
+      button.onclick = () => {
+        add(p.id, sizeSelect.value);
+      };
     } else {
       button.style.opacity = "0.5";
       button.style.cursor = "not-allowed";
     }
 
-    info.append(details, button);
+    info.append(details, sizeSelect, button);
     card.append(imageArea, info);
     list.appendChild(card);
   });
@@ -168,7 +189,36 @@ function add(id, selectedSize) {
   if (existing) {
     existing.qty++;
   } else {
- 
+    cart.push({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      size: selectedSize,
+      qty: 1
+    });
+  }
+
+  save();
+  openCart();
+}
+
+function renderCart() {
+  const wrap = $("cartItems");
+  const subtotal = $("subtotal");
+  const count = $("drawerCount");
+
+  if (!wrap) return;
+
+  wrap.innerHTML = "";
+
+  if (!cart.length) {
+    wrap.innerHTML = '<p class="muted">Your bag is empty.</p>';
+  }
+
+  cart.forEach((x, i) => {
+    const row = document.createElement("div");
+    row.className = "cart-row";
+
     const details = document.createElement("div");
 
     const name = document.createElement("strong");
@@ -179,13 +229,6 @@ function add(id, selectedSize) {
 
     const lineTotal = document.createElement("small");
     lineTotal.textContent = money(x.price * x.qty);
-cart.push
-
-  wrap.innerHTML = "";
-
-  cart.forEach((x, i) => {
-    const row = document.createElement("div");
-    row.className = "cart-row";
 
     details.append(name, size, lineTotal);
 
@@ -218,6 +261,12 @@ cart.push
     row.append(details, qty);
     wrap.appendChild(row);
   });
+
+  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const totalCount = cart.reduce((s, x) => s + x.qty, 0);
+
+  if (subtotal) subtotal.textContent = money(total);
+  if (count) count.textContent = `(${totalCount})`;
 }
 
 function openCart() {
@@ -289,8 +338,10 @@ if ($("checkoutForm")) {
     };
 
     const msg = $("formMessage");
-    msg.className = "form-message";
-    msg.textContent = "Saving your order...";
+    if (msg) {
+      msg.className = "form-message";
+      msg.textContent = "Saving your order...";
+    }
 
     try {
       const response = await fetch(
@@ -309,9 +360,11 @@ if ($("checkoutForm")) {
 
       if (!response.ok) throw new Error(await response.text());
 
-      msg.className = "form-message success";
-      msg.textContent =
-        "Order saved successfully! Your order reference is " + reference;
+      if (msg) {
+        msg.className = "form-message success";
+        msg.textContent =
+          "Order saved successfully! Your order reference is " + reference;
+      }
 
       cart = [];
       save();
@@ -319,8 +372,10 @@ if ($("checkoutForm")) {
 
     } catch (error) {
       console.error("Order error:", error);
-      msg.className = "form-message error";
-      msg.textContent = "Could not save your order. Please try again.";
+      if (msg) {
+        msg.className = "form-message error";
+        msg.textContent = "Could not save your order. Please try again.";
+      }
     }
   };
 }
@@ -334,12 +389,14 @@ if (trackButton) {
     const result = $("trackResult");
 
     if (!orderReference || !phone) {
-      result.textContent =
-        "Please enter your order reference and phone number.";
+      if (result) {
+        result.textContent =
+          "Please enter your order reference and phone number.";
+      }
       return;
     }
 
-    result.textContent = "Checking order...";
+    if (result) result.textContent = "Checking order...";
 
     try {
       const response = await fetch(
@@ -361,17 +418,21 @@ if (trackButton) {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        result.textContent = data.error || "Could not find order.";
+        if (result) result.textContent = data.error || "Could not find order.";
         return;
       }
 
-      result.textContent =
-        `Order ${data.order_reference}: ${data.status}`;
+      if (result) {
+        result.textContent =
+          `Order ${data.order_reference}: ${data.status}`;
+      }
 
     } catch (error) {
       console.error("Tracking error:", error);
-      result.textContent =
-        "Could not check your order. Please try again.";
+      if (result) {
+        result.textContent =
+          "Could not check your order. Please try again.";
+      }
     }
   });
 }
