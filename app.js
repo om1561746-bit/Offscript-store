@@ -433,3 +433,7 @@ trackButton.addEventListener("click", async () => {
     }
   }
 });
+}
+
+renderCart();
+loadProducts();
