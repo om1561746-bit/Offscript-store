@@ -7,20 +7,29 @@ let cart = JSON.parse(localStorage.getItem("offspcript-cart") || "[]");
 let activeFilter = "all";
 
 const $ = id => document.getElementById(id);
-const money = n => "EGP " + Number(n).toLocaleString("en-EG");
+const money = n => "EGP " + Number(n || 0).toLocaleString("en-EG");
 
 function save() {
   localStorage.setItem("offspcript-cart", JSON.stringify(cart));
   renderCart();
 }
 
+function getStatus(status) {
+  const value = String(status || "available").toLowerCase().replace(/[\s_-]/g, "");
+  if (value === "soldout") return "SOLD OUT";
+  if (value === "comingsoon") return "COMING SOON";
+  return "AVAILABLE";
+}
+
 async function loadProducts() {
   const list = $("products");
+  if (!list) return;
+
   list.innerHTML = '<p class="muted">Loading products...</p>';
 
   try {
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/products?select=name,price,description,image_url,color,size,status,created_at&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/products?select=id,name,description,price,image_url,sizes,colors,status,created_at&order=created_at.desc`,
       {
         headers: {
           apikey: SUPABASE_PUBLISHABLE_KEY,
@@ -33,39 +42,35 @@ async function loadProducts() {
 
     const data = await response.json();
 
-    products = data.map((p, index) => ({
-      id: `${p.name}-${p.color || ""}-${p.size || ""}-${p.created_at || index}`,
-      name: p.name,
-      price: Number(p.price),
+    products = data.map(p => ({
+      id: String(p.id),
+      name: p.name || "",
+      price: Number(p.price || 0),
       description: p.description || "",
       image: p.image_url || "",
-      color: p.color || "",
-      sizes: String(p.size || "One Size").split(",").map(s => s.trim()),
-      status: String(p.status || "Available").toLowerCase().trim()
+      colors: Array.isArray(p.colors) ? p.colors : [],
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      status: p.status || "available"
     }));
 
     renderProducts();
 
   } catch (error) {
-    console.error(error);
-    list.innerHTML =
-      '<p class="muted">Could not load products. Please refresh the page.</p>';
+    console.error("Products loading error:", error);
+    list.textContent = "Could not load products. Please refresh the page.";
   }
-}
-
-function getStatus(status) {
-  const value = status.replace(/[\s_-]/g, "");
-  if (value === "soldout") return "SOLD OUT";
-  if (value === "comingsoon") return "COMING SOON";
-  return "AVAILABLE";
 }
 
 function renderProducts() {
   const list = $("products");
+  if (!list) return;
+
   list.innerHTML = "";
 
   const visibleProducts = products.filter(p =>
-    activeFilter === "all" || !p.category || p.category === activeFilter
+    activeFilter === "all" ||
+    !p.category ||
+    p.category === activeFilter
   );
 
   if (!visibleProducts.length) {
@@ -80,47 +85,81 @@ function renderProducts() {
     const status = getStatus(p.status);
     const available = status === "AVAILABLE";
 
-    const image = p.image
-      ? `<img src="${p.image}" alt="${p.name}">`
-      : `<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>`;
+    const imageArea = document.createElement("div");
+    imageArea.className = "product-image";
 
-    card.innerHTML = `
-      <div class="product-image">
-        ${image}
-        <span class="product-tag">${status}</span>
-      </div>
-      <div class="product-info">
-        <div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-meta">
-            ${p.description}
-            ${p.color ? `<br>Color: ${p.color}` : ""}
-            ${p.sizes.length ? `<br>Size: ${p.sizes.join(", ")}` : ""}
-          </div>
-          <div class="product-price">${money(p.price)}</div>
-        </div>
-        <button class="add-button" ${available ? "" : "disabled"}>
-          ${available ? "ADD +" : status}
-        </button>
-      </div>`;
-
-    if (available) {
-      card.querySelector("button").onclick = () => add(p.id);
+    if (p.image) {
+      const img = document.createElement("img");
+      img.src = p.image;
+      img.alt = p.name;
+      img.loading = "lazy";
+      img.onerror = () => {
+        img.remove();
+        imageArea.insertAdjacentHTML(
+          "afterbegin",
+          '<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>'
+        );
+      };
+      imageArea.appendChild(img);
     } else {
-      card.querySelector("button").style.opacity = "0.5";
-      card.querySelector("button").style.cursor = "not-allowed";
+      imageArea.innerHTML =
+        '<div class="placeholder-art">OFF<br>SPC<br>RIPT</div>';
     }
 
+    const tag = document.createElement("span");
+    tag.className = "product-tag";
+    tag.textContent = status;
+    imageArea.appendChild(tag);
+
+    const info = document.createElement("div");
+    info.className = "product-info";
+
+    const details = document.createElement("div");
+
+    const name = document.createElement("div");
+    name.className = "product-name";
+    name.textContent = p.name;
+
+    const meta = document.createElement("div");
+    meta.className = "product-meta";
+    meta.textContent = [
+      p.description,
+      p.colors.length ? "Colors: " + p.colors.join(", ") : "",
+      p.sizes.length ? "Sizes: " + p.sizes.join(", ") : ""
+    ].filter(Boolean).join("\n");
+
+    const price = document.createElement("div");
+    price.className = "product-price";
+    price.textContent = money(p.price);
+
+    details.append(name, meta, price);
+
+    const button = document.createElement("button");
+    button.className = "add-button";
+    button.textContent = available ? "ADD +" : status;
+    button.disabled = !available;
+
+    if (available) {
+      button.onclick = () => add(p.id);
+    } else {
+      button.style.opacity = "0.5";
+      button.style.cursor = "not-allowed";
+    }
+
+    info.append(details, button);
+    card.append(imageArea, info);
     list.appendChild(card);
   });
 }
 
 function add(id) {
-  const p = products.find(x => x.id === id);
+  const p = products.find(x => x.id === String(id));
   if (!p || getStatus(p.status) !== "AVAILABLE") return;
 
   const firstSize = p.sizes[0] || "One Size";
-  const existing = cart.find(x => x.id === id && x.size === firstSize);
+  const existing = cart.find(
+    x => String(x.id) === String(id) && x.size === firstSize
+  );
 
   if (existing) {
     existing.qty++;
@@ -139,15 +178,24 @@ function add(id) {
 }
 
 function renderCart() {
-  const count = cart.reduce((s, x) => s + x.qty, 0);
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
-
-  $("cartCount").textContent = count;
-  $("drawerCount").textContent = `(${count})`;
-  $("subtotal").textContent = money(total);
-  $("checkoutTotal").textContent = money(total);
-
+  const countElement = $("cartCount");
+  const drawerCount = $("drawerCount");
+  const subtotal = $("subtotal");
+  const checkoutTotal = $("checkoutTotal");
   const wrap = $("cartItems");
+
+  if (!wrap) return;
+
+  const count = cart.reduce((s, x) => s + Number(x.qty || 0), 0);
+  const total = cart.reduce(
+    (s, x) => s + Number(x.price || 0) * Number(x.qty || 0),
+    0
+  );
+
+  if (countElement) countElement.textContent = count;
+  if (drawerCount) drawerCount.textContent = `(${count})`;
+  if (subtotal) subtotal.textContent = money(total);
+  if (checkoutTotal) checkoutTotal.textContent = money(total);
 
   if (!cart.length) {
     wrap.innerHTML = '<p class="muted">Your bag is empty.</p>';
@@ -160,132 +208,161 @@ function renderCart() {
     const row = document.createElement("div");
     row.className = "cart-row";
 
-    row.innerHTML = `
-      <div>
-        <strong>${x.name}</strong>
-        <small>Size: ${x.size} · ${money(x.price)}</small>
-        <small>${money(x.price * x.qty)}</small>
-      </div>
-      <div class="qty">
-        <button aria-label="Decrease">−</button>
-        <span>${x.qty}</span>
-        <button aria-label="Increase">+</button>
-      </div>`;
+    const details = document.createElement("div");
 
-    const buttons = row.querySelectorAll("button");
+    const name = document.createElement("strong");
+    name.textContent = x.name;
 
-    buttons[0].onclick = () => {
+    const size = document.createElement("small");
+    size.textContent = `Size: ${x.size} · ${money(x.price)}`;
+
+    const lineTotal = document.createElement("small");
+    lineTotal.textContent = money(x.price * x.qty);
+
+    details.append(name, size, lineTotal);
+
+    const qty = document.createElement("div");
+    qty.className = "qty";
+
+    const decrease = document.createElement("button");
+    decrease.textContent = "−";
+    decrease.setAttribute("aria-label", "Decrease");
+
+    const number = document.createElement("span");
+    number.textContent = x.qty;
+
+    const increase = document.createElement("button");
+    increase.textContent = "+";
+    increase.setAttribute("aria-label", "Increase");
+
+    decrease.onclick = () => {
       x.qty--;
       if (x.qty <= 0) cart.splice(i, 1);
       save();
     };
 
-    buttons[1].onclick = () => {
+    increase.onclick = () => {
       x.qty++;
       save();
     };
 
+    qty.append(decrease, number, increase);
+    row.append(details, qty);
     wrap.appendChild(row);
   });
 }
 
 function openCart() {
-  $("overlay").classList.add("show");
-  $("cartDrawer").classList.add("show");
+  $("overlay")?.classList.add("show");
+  $("cartDrawer")?.classList.add("show");
 }
 
 function closeAll() {
-  $("overlay").classList.remove("show");
-  $("cartDrawer").classList.remove("show");
-  $("checkoutModal").classList.remove("show");
+  $("overlay")?.classList.remove("show");
+  $("cartDrawer")?.classList.remove("show");
+  $("checkoutModal")?.classList.remove("show");
 }
 
-$("openCart").onclick = openCart;
-$("closeCart").onclick = closeAll;
-$("overlay").onclick = closeAll;
+if ($("openCart")) $("openCart").onclick = openCart;
+if ($("closeCart")) $("closeCart").onclick = closeAll;
+if ($("overlay")) $("overlay").onclick = closeAll;
 
-$("checkoutButton").onclick = () => {
-  if (!cart.length) return;
-  closeAll();
-  $("checkoutModal").classList.add("show");
-};
+if ($("checkoutButton")) {
+  $("checkoutButton").onclick = () => {
+    if (!cart.length) return;
+    closeAll();
+    $("checkoutModal")?.classList.add("show");
+  };
+}
 
-$("closeCheckout").onclick = () =>
-  $("checkoutModal").classList.remove("show");
+if ($("closeCheckout")) {
+  $("closeCheckout").onclick = () =>
+    $("checkoutModal")?.classList.remove("show");
+}
 
 document.querySelectorAll(".filter").forEach(button => {
   button.onclick = () => {
     document.querySelectorAll(".filter").forEach(x =>
       x.classList.remove("active")
     );
+
     button.classList.add("active");
-    activeFilter = button.dataset.filter;
+    activeFilter = button.dataset.filter || "all";
     renderProducts();
   };
 });
 
-$("checkoutForm").onsubmit = async event => {
-  event.preventDefault();
-  if (!cart.length) return;
+if ($("checkoutForm")) {
+  $("checkoutForm").onsubmit = async event => {
+    event.preventDefault();
+    if (!cart.length) return;
 
-  const form = event.target;
-  const data = Object.fromEntries(new FormData(form).entries());
+    const form = event.target;
+    const data = Object.fromEntries(new FormData(form).entries());
 
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
-  const reference = "OFF-" + Date.now().toString().slice(-7);
+    const total = cart.reduce(
+      (s, x) => s + x.price * x.qty,
+      0
+    );
 
-  const orderData = {
-    order_reference: reference,
-    customer_name: data.name,
-    phone: data.phone,
-    email: data.email || null,
-    address: data.address,
-    items: cart,
-    total,
-    payment_method: "Cash on Delivery",
-    status: "Pending",
-    notes: data.notes || null
+    const reference = "OFF-" + Date.now().toString().slice(-7);
+
+    const orderData = {
+      order_reference: reference,
+      customer_name: data.name,
+      phone: data.phone,
+      email: data.email || null,
+      address: data.address,
+      items: cart,
+      total,
+      payment_method: "Cash on Delivery",
+      status: "Pending",
+      notes: data.notes || null
+    };
+
+    const msg = $("formMessage");
+    msg.className = "form-message";
+    msg.textContent = "Saving your order...";
+
+    try {
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/orders`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            Prefer: "return=minimal"
+          },
+          body: JSON.stringify(orderData)
+        }
+      );
+
+      if (!response.ok) throw new Error(await response.text());
+
+      msg.className = "form-message success";
+      msg.textContent =
+        "Order saved successfully! Your order reference is " + reference;
+
+      cart = [];
+      save();
+      form.reset();
+
+    } catch (error) {
+      console.error("Order error:", error);
+      msg.className = "form-message error";
+      msg.textContent = "Could not save your order. Please try again.";
+    }
   };
-
-  const msg = $("formMessage");
-  msg.className = "form-message";
-  msg.textContent = "Saving your order...";
-
-  try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-        Prefer: "return=minimal"
-      },
-      body: JSON.stringify(orderData)
-    });
-
-    if (!response.ok) throw new Error(await response.text());
-
-    msg.className = "form-message success";
-    msg.textContent =
-      "Order saved successfully! Your order reference is " + reference;
-
-    cart = [];
-    save();
-    form.reset();
-
-  } catch (error) {
-    console.error(error);
-    msg.className = "form-message error";
-    msg.textContent = "Could not save your order. Please try again.";
-  }
-};
+}
 
 const trackButton = $("trackButton");
 
 if (trackButton) {
   trackButton.addEventListener("click", async () => {
-    const orderReference = $("trackReference").value.trim();
-    const phone = $("trackPhone").value.trim();
+    const orderReference = $("trackReference")?.value.trim();
+    const phone = $("trackPhone")?.value.trim();
     const result = $("trackResult");
 
     if (!orderReference || !phone) {
@@ -323,7 +400,8 @@ if (trackButton) {
       result.textContent =
         `Order ${data.order_reference}: ${data.status}`;
 
-    } catch {
+    } catch (error) {
+      console.error("Tracking error:", error);
       result.textContent =
         "Could not check your order. Please try again.";
     }
