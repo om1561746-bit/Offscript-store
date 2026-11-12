@@ -98,7 +98,7 @@ select{background:#111;color:white;border:1px solid #555}
     <input id="productImage" type="file" accept="image/*">
 
     <input id="productSizes" type="text" placeholder="Sizes: S, M, L, XL">
-
+<div id="sizeStatusEditor"></div>
     <input id="productColors" type="text" placeholder="Colors: Black, Cream">
 
     <select id="productStatus">
@@ -298,7 +298,6 @@ if(data.session)await showDashboard();
 checkLogin();
 
 let editingProductImageUrl = "";
-
 async function loadProducts() {
   const list = document.getElementById("productsList");
   list.textContent = "Loading products...";
@@ -349,7 +348,9 @@ async function loadProducts() {
     </div>
   `).join("");
 }
-
+document.getElementById("productSizes").addEventListener("input", () => {
+  renderSizeStatusEditor();
+});
 document.getElementById("productForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -363,6 +364,12 @@ document.getElementById("productForm").addEventListener("submit", async (event) 
     const price = Number(document.getElementById("productPrice").value);
     const file = document.getElementById("productImage").files[0];
     const sizes = document.getElementById("productSizes").value
+     const sizeStatus = {};
+
+document.querySelectorAll("#sizeStatusEditor [data-size-status]")
+  .forEach(select => {
+    sizeStatus[select.dataset.sizeStatus] = select.value;
+  });
       .split(",").map(x => x.trim()).filter(Boolean);
     const colors = document.getElementById("productColors").value
       .split(",").map(x => x.trim()).filter(Boolean);
@@ -404,7 +411,8 @@ const product = {
   description,
   price,
   image_url: imageUrl || null,
-  sizes,
+   sizes,
+  size_status: sizeStatus,
   colors,
   status
 };
@@ -417,6 +425,7 @@ const product = {
 
     alert("Product saved successfully!");
     document.getElementById("productForm").reset();
+    renderSizeStatusEditor({});
     document.getElementById("productId").value = "";
     editingProductImageUrl = "";
 
@@ -453,6 +462,7 @@ document.getElementById("productsList").addEventListener("click", async (event) 
     document.getElementById("productPrice").value = data.price;
     document.getElementById("productCategory").value = data.category || "tshirt";
     document.getElementById("productSizes").value = (data.sizes || []).join(", ");
+   renderSizeStatusEditor(data.size_status || {});
     document.getElementById("productColors").value = (data.colors || []).join(", ");
     document.getElementById("productStatus").value = data.status;
     editingProductImageUrl = data.image_url || "";
@@ -482,6 +492,7 @@ document.getElementById("productsList").addEventListener("click", async (event) 
 
 document.getElementById("cancelProductEdit").addEventListener("click", () => {
   document.getElementById("productForm").reset();
+ renderSizeStatusEditor({});
   document.getElementById("productId").value = "";
   editingProductImageUrl = "";
 });
