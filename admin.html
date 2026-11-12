@@ -451,6 +451,7 @@ document.getElementById("productsList").addEventListener("click", async (event) 
     document.getElementById("productName").value = data.name;
     document.getElementById("productDescription").value = data.description || "";
     document.getElementById("productPrice").value = data.price;
+    document.getElementById("productCategory").value = data.category || "tshirt";
     document.getElementById("productSizes").value = (data.sizes || []).join(", ");
     document.getElementById("productColors").value = (data.colors || []).join(", ");
     document.getElementById("productStatus").value = data.status;
